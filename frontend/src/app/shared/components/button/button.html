@@ -1,0 +1,8 @@
+<button [type]="type" [disabled]="isDisabled" class="app-btn">
+  @if (loading) {
+    <span class="spinner"></span>
+    Please wait...
+  } @else {
+    <ng-content />
+  }
+</button>
