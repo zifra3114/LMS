@@ -7,6 +7,8 @@ export interface ToastMessage {
   id: number;
   type: ToastType;
   message: string;
+  /** Optional heading. When omitted, the toast component shows its default for the type. */
+  title?: string;
   leaving: boolean;
 }
 
@@ -21,20 +23,20 @@ export class Toast {
   private readonly toastSubject = new BehaviorSubject<ToastMessage[]>([]);
   readonly toasts$ = this.toastSubject.asObservable();
 
-  success(message: string): void {
-    this.show(message, 'success');
+  success(message: string, title?: string): void {
+    this.show(message, 'success', title);
   }
 
-  error(message: string): void {
-    this.show(message, 'error');
+  error(message: string, title?: string): void {
+    this.show(message, 'error', title);
   }
 
-  warning(message: string): void {
-    this.show(message, 'warning');
+  warning(message: string, title?: string): void {
+    this.show(message, 'warning', title);
   }
 
-  info(message: string): void {
-    this.show(message, 'info');
+  info(message: string, title?: string): void {
+    this.show(message, 'info', title);
   }
 
   remove(id: number): void {
@@ -64,8 +66,8 @@ export class Toast {
     setTimeout(() => this.remove(id), 300);
   }
 
-  private show(message: string, type: ToastType): void {
-    // 5 pehle se hain to sabse purana hata do
+  private show(message: string, type: ToastType, title?: string): void {
+    // When the limit is reached, drop the oldest toast.
     const current = this.toastSubject.value;
     if (current.length >= this.maxToasts) {
       this.remove(current[0].id);
@@ -75,7 +77,7 @@ export class Toast {
 
     this.toastSubject.next([
       ...this.toastSubject.value,
-      { id, type, message, leaving: false },
+      { id, type, message, title, leaving: false },
     ]);
 
     const timer = setTimeout(() => this.dismiss(id), 4000);
