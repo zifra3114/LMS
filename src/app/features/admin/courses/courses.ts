@@ -7,10 +7,23 @@ import { BadgeComponent, type BadgeVariant } from '../../../shared/components/ba
 import { IconComponent } from '../../../shared/components/icon/icon';
 import { ActionButtonsComponent } from '../../../shared/components/action-buttons/action-buttons';
 import { Toast } from '../../../core/services/toast.service';
-import { CourseInput, CourseService } from '../../../core/services/course.service';
+import {
+  CourseInput,
+  CourseService,
+} from '../../../core/services/course.service';
 
-import { Course, CourseLevel, CourseStatus } from './courses.models';
-import { CourseFormComponent } from './course-form';
+import {
+  Course,
+  CourseLevel,
+  CourseStatus,
+  CourseBatch,
+  CourseBatchInput,
+} from './courses.models';
+
+import {
+  CourseFormComponent,
+  CourseFormSavePayload,
+} from './course-form';
 
 @Component({
   selector: 'app-courses',
@@ -28,27 +41,26 @@ import { CourseFormComponent } from './course-form';
   ],
   template: `
     <div class="pb-8">
-
       <app-page-header title="My Courses" />
 
       <!-- Course Form -->
       @if (formOpen()) {
         <app-course-form
           [course]="editingCourse()"
+          [existingBatches]="existingBatches()"
           [saving]="saving()"
           (save)="saveCourse($event)"
           (cancel)="closeForm()"
         />
-      } @else {
+      }
 
+      <!-- List stays visible behind the form modal -->
         <!-- Tabs and Filters -->
         <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-
             <app-tabs [tabs]="tabs()" [(active)]="activeTab" />
 
             <div class="flex flex-wrap items-center gap-3">
-
               @if (searchOpen()) {
                 <input
                   type="text"
@@ -117,7 +129,6 @@ import { CourseFormComponent } from './course-form';
                 <app-icon name="plus" />
                 New Course
               </button>
-
             </div>
           </div>
         </div>
@@ -131,7 +142,6 @@ import { CourseFormComponent } from './course-form';
             </div>
           </div>
         } @else {
-
           <!-- Empty State -->
           @if (filtered().length === 0) {
             <div class="mt-6 flex min-h-72 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 text-center">
@@ -154,16 +164,11 @@ import { CourseFormComponent } from './course-form';
               </button>
             </div>
           } @else {
-
-            <!-- GRID VIEW -->
+            <!-- Grid View -->
             @if (view() === 'grid') {
               <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-
                 @for (c of filtered(); track c.id) {
-                  <article
-                    class="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md"
-                  >
-
+                  <article class="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md">
                     @if (isImageUrl(c.thumbnail)) {
                       <div class="h-64 w-full overflow-hidden bg-slate-900">
                         <img
@@ -181,7 +186,6 @@ import { CourseFormComponent } from './course-form';
                     }
 
                     <div class="flex flex-1 flex-col p-4">
-
                       <div class="flex items-center gap-2 text-xs font-medium text-slate-400">
                         <span>{{ c.type === 'single' ? 'Single course' : 'Bundle course' }}</span>
                         <span aria-hidden="true">•</span>
@@ -193,7 +197,9 @@ import { CourseFormComponent } from './course-form';
                           {{ c.title }}
                         </h3>
                         <div class="shrink-0">
-                          <app-badge [variant]="statusVariant(c.status)">{{ c.status }}</app-badge>
+                          <app-badge [variant]="statusVariant(c.status)">
+                            {{ c.status }}
+                          </app-badge>
                         </div>
                       </div>
 
@@ -202,8 +208,17 @@ import { CourseFormComponent } from './course-form';
                       </p>
 
                       <div class="mt-3 flex items-center gap-2">
-                        <ng-container *ngTemplateOutlet="levelBars; context: { $implicit: c.level }" />
+                        <ng-container
+                          *ngTemplateOutlet="levelBars; context: { $implicit: c.level }"
+                        />
                         <span class="text-xs font-medium text-slate-600">{{ c.level }}</span>
+
+                        @if (batchInfo(c.id); as info) {
+                          <span [class]="batchBadgeClass(info.status)">{{ info.status }}</span>
+                          @if (info.extra > 0) {
+                            <span class="text-xs text-slate-400">+{{ info.extra }} more</span>
+                          }
+                        }
                       </div>
 
                       <div class="mt-auto pt-3">
@@ -224,19 +239,15 @@ import { CourseFormComponent } from './course-form';
                           />
                         </div>
                       </div>
-
                     </div>
                   </article>
                 }
-
               </div>
             } @else {
-
-              <!-- LIST VIEW (Prominent Badi Images) -->
+              <!-- List View -->
               <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="overflow-x-auto">
                   <table class="w-full min-w-[950px] text-left">
-
                     <thead class="border-b border-slate-200 bg-slate-50">
                       <tr>
                         <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Course</th>
@@ -252,7 +263,6 @@ import { CourseFormComponent } from './course-form';
                     <tbody class="divide-y divide-slate-100">
                       @for (c of filtered(); track c.id) {
                         <tr class="transition hover:bg-slate-50">
-
                           <td class="px-6 py-5">
                             <div class="flex items-center gap-5">
                               @if (isImageUrl(c.thumbnail)) {
@@ -278,18 +288,29 @@ import { CourseFormComponent } from './course-form';
                             </div>
                           </td>
 
-                          <td class="px-6 py-5 text-sm font-semibold capitalize text-slate-700">{{ c.type }}</td>
-
-                          <td class="px-6 py-5 text-sm font-medium text-slate-600">{{ c.duration || '—' }}</td>
-
+                          <td class="px-6 py-5 text-sm font-semibold capitalize text-slate-700">
+                            {{ c.type }}
+                          </td>
+                          <td class="px-6 py-5 text-sm font-medium text-slate-600">
+                            {{ c.duration || '—' }}
+                          </td>
                           <td class="px-6 py-5 text-base font-bold text-slate-900">
                             {{ c.price | currency: 'USD' : 'symbol' : '1.0-2' }}
                           </td>
+                          <td class="px-6 py-5 text-sm font-medium text-slate-600">
+                            {{ c.level }}
 
-                          <td class="px-6 py-5 text-sm font-medium text-slate-600">{{ c.level }}</td>
-
+                            @if (batchInfo(c.id); as info) {
+                              <span class="ml-2" [class]="batchBadgeClass(info.status)">{{ info.status }}</span>
+                              @if (info.extra > 0) {
+                                <span class="ml-1 text-xs text-slate-400">+{{ info.extra }} more</span>
+                              }
+                            }
+                          </td>
                           <td class="px-6 py-5">
-                            <app-badge [variant]="statusVariant(c.status)">{{ c.status }}</app-badge>
+                            <app-badge [variant]="statusVariant(c.status)">
+                              {{ c.status }}
+                            </app-badge>
                           </td>
 
                           <td class="px-6 py-5">
@@ -306,7 +327,6 @@ import { CourseFormComponent } from './course-form';
                               />
                             </div>
                           </td>
-
                         </tr>
                       }
                     </tbody>
@@ -316,7 +336,6 @@ import { CourseFormComponent } from './course-form';
             }
           }
         }
-      }
 
       <!-- Course Details Modal -->
       @if (selectedCourse(); as course) {
@@ -331,7 +350,6 @@ import { CourseFormComponent } from './course-form';
             aria-label="Course details"
             (click)="$event.stopPropagation()"
           >
-
             <div class="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-4">
               <h2 class="text-lg font-bold text-slate-900">Course Details</h2>
 
@@ -346,7 +364,6 @@ import { CourseFormComponent } from './course-form';
             </div>
 
             <div class="min-h-0 flex-1 overflow-y-auto">
-
               @if (isImageUrl(course.thumbnail)) {
                 <div class="h-80 w-full overflow-hidden bg-slate-900">
                   <img
@@ -362,10 +379,11 @@ import { CourseFormComponent } from './course-form';
               }
 
               <div class="space-y-4 p-6">
-
                 <div class="flex flex-wrap items-start justify-between gap-3">
                   <h3 class="text-xl font-bold text-slate-900">{{ course.title }}</h3>
-                  <app-badge [variant]="statusVariant(course.status)">{{ course.status }}</app-badge>
+                  <app-badge [variant]="statusVariant(course.status)">
+                    {{ course.status }}
+                  </app-badge>
                 </div>
 
                 <div>
@@ -401,10 +419,53 @@ import { CourseFormComponent } from './course-form';
                   </div>
                 </div>
 
-                <p class="text-xs text-slate-400">
-                  Created: {{ course.createdAt | date: 'MMMM d, y, h:mm a' }}
-                </p>
+                <!-- Batch Details -->
+                <div class="border-t border-slate-200 pt-4">
+                  <div class="mb-3 flex items-center justify-between">
+                    <h3 class="font-semibold text-slate-900">Course Batches</h3>
+                    <button
+                      type="button"
+                      (click)="editFromDetails(course)"
+                      class="text-sm font-semibold text-blue-600 hover:text-blue-700"
+                    >
+                      Manage batches
+                    </button>
+                  </div>
 
+                  @if (detailsBatchesLoading()) {
+                    <p class="text-sm text-slate-500">Loading batches...</p>
+                  } @else if (detailsBatches().length === 0) {
+                    <p class="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">
+                      No batches have been added to this course yet.
+                    </p>
+                  } @else {
+                    <div class="space-y-3">
+                      @for (batch of detailsBatches(); track batch.id) {
+                        <div class="rounded-xl border border-slate-200 p-4">
+                          <div class="flex flex-wrap items-start justify-between gap-2">
+                            <div>
+                              <p class="font-semibold text-slate-900">{{ batch.batch_name }}</p>
+                              <p class="mt-1 text-xs text-slate-500">Code: {{ batch.batch_code }}</p>
+                            </div>
+                            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                              {{ batch.status }}
+                            </span>
+                          </div>
+
+                          <p class="mt-3 text-sm text-slate-600">
+                            {{ batch.start_date | date: 'mediumDate' }}
+                            –
+                            {{ batch.end_date | date: 'mediumDate' }}
+                          </p>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <p class="text-xs text-slate-400">
+                  Created: {{ course.created_at | date: 'MMMM d, y, h:mm a' }}
+                </p>
               </div>
             </div>
 
@@ -426,7 +487,6 @@ import { CourseFormComponent } from './course-form';
                 Edit Course
               </button>
             </div>
-
           </div>
         </div>
       }
@@ -443,7 +503,6 @@ import { CourseFormComponent } from './course-form';
             aria-modal="true"
             (click)="$event.stopPropagation()"
           >
-
             <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-600">
               <app-icon name="trash-2" [size]="22" />
             </div>
@@ -481,7 +540,6 @@ import { CourseFormComponent } from './course-form';
                 }
               </button>
             </div>
-
           </div>
         </div>
       }
@@ -499,7 +557,6 @@ import { CourseFormComponent } from './course-form';
           }
         </div>
       </ng-template>
-
     </div>
   `,
 })
@@ -521,11 +578,70 @@ export class CoursesComponent implements OnInit {
   formOpen = signal(false);
   editingCourse = signal<CourseInput | null>(null);
   editingId = signal<number | null>(null);
+  existingBatches = signal<CourseBatch[]>([]);
 
   selectedCourse = signal<Course | null>(null);
+  detailsBatches = signal<CourseBatch[]>([]);
+  detailsBatchesLoading = signal(false);
 
   deletingId = signal<number | null>(null);
   courseToDelete = signal<Course | null>(null);
+
+  // All batches, used to show the batch status on every course card
+  allBatches = signal<CourseBatch[]>([]);
+
+  private readonly batchPriority: Record<string, number> = {
+    Ongoing: 0,
+    Upcoming: 1,
+    Completed: 2,
+    Cancelled: 3,
+  };
+
+  // course id -> most relevant batch status + how many other batches exist
+  private batchSummary = computed(() => {
+    const grouped = new Map<number, CourseBatch[]>();
+
+    for (const batch of this.allBatches()) {
+      const list = grouped.get(batch.course_id) ?? [];
+      list.push(batch);
+      grouped.set(batch.course_id, list);
+    }
+
+    const summary = new Map<number, { status: string; extra: number }>();
+
+    grouped.forEach((list, courseId) => {
+      const sorted = [...list].sort(
+        (a, b) =>
+          (this.batchPriority[a.status] ?? 9) - (this.batchPriority[b.status] ?? 9),
+      );
+
+      summary.set(courseId, {
+        status: sorted[0].status,
+        extra: list.length - 1,
+      });
+    });
+
+    return summary;
+  });
+
+  batchInfo(courseId: number): { status: string; extra: number } | null {
+    return this.batchSummary().get(courseId) ?? null;
+  }
+
+  batchBadgeClass(status: string): string {
+    const base = 'rounded-full px-2 py-0.5 text-xs font-medium ';
+
+    switch (status) {
+      case 'Ongoing':
+        return base + 'bg-emerald-50 text-emerald-700';
+      case 'Upcoming':
+        return base + 'bg-blue-50 text-blue-700';
+      case 'Completed':
+        return base + 'bg-slate-100 text-slate-600';
+      default:
+        return base + 'bg-red-50 text-red-600';
+    }
+  }
 
   tabs = computed<TabItem[]>(() => [
     {
@@ -547,7 +663,10 @@ export class CoursesComponent implements OnInit {
       const matchesType = c.type === this.activeTab();
       const matchesStatus =
         this.statusFilter() === 'All' || c.status === this.statusFilter();
-      const matchesSearch = !term || c.title.toLowerCase().includes(term);
+      const matchesSearch =
+        !term ||
+        (c.title ?? '').toLowerCase().includes(term) ||
+        (c.description ?? '').toLowerCase().includes(term);
 
       return matchesType && matchesStatus && matchesSearch;
     });
@@ -572,7 +691,7 @@ export class CoursesComponent implements OnInit {
   }
 
   rank(level: CourseLevel): number {
-    return { Basic: 1, Intermediate: 2, Expert: 3 }[level];
+    return { Basic: 1, Intermediate: 2, Expert: 3 }[level] ?? 1;
   }
 
   toggleSearch(): void {
@@ -586,10 +705,11 @@ export class CoursesComponent implements OnInit {
   onNew(): void {
     this.editingId.set(null);
     this.editingCourse.set(null);
+    this.existingBatches.set([]);
     this.formOpen.set(true);
   }
 
-  onEdit(course: Course): void {
+  async onEdit(course: Course): Promise<void> {
     this.editingId.set(course.id);
 
     this.editingCourse.set({
@@ -604,47 +724,77 @@ export class CoursesComponent implements OnInit {
     });
 
     this.selectedCourse.set(null);
-    this.formOpen.set(true);
+    this.existingBatches.set([]);
+
+    try {
+      const batches = await this.courseService.getBatches(course.id);
+      this.existingBatches.set(batches);
+      this.formOpen.set(true);
+    } catch (error) {
+      console.error('Failed to load course batches:', error);
+
+      this.toast.error(
+        'Course batches could not load. Check your Supabase table and policies.',
+      );
+    }
   }
 
   editFromDetails(course: Course): void {
-    this.onEdit(course);
+    void this.onEdit(course);
   }
 
-  showDetails(course: Course): void {
+  async showDetails(course: Course): Promise<void> {
     this.selectedCourse.set(course);
+    this.detailsBatches.set([]);
+    this.detailsBatchesLoading.set(true);
+
+    try {
+      const batches = await this.courseService.getBatches(course.id);
+
+      if (this.selectedCourse()?.id === course.id) {
+        this.detailsBatches.set(batches);
+      }
+    } catch (error) {
+      console.error('Failed to load course batches:', error);
+
+      this.toast.error(
+        'Batch details could not load. Please check Supabase access policies.',
+      );
+    } finally {
+      if (this.selectedCourse()?.id === course.id) {
+        this.detailsBatchesLoading.set(false);
+      }
+    }
   }
 
   closeDetails(): void {
     this.selectedCourse.set(null);
+    this.detailsBatches.set([]);
+    this.detailsBatchesLoading.set(false);
   }
 
   closeForm(): void {
     this.formOpen.set(false);
     this.editingCourse.set(null);
     this.editingId.set(null);
+    this.existingBatches.set([]);
   }
 
   async loadCourses(): Promise<void> {
     this.loading.set(true);
 
     try {
-      const data = await this.courseService.getCourses();
+      const [courses, batches] = await Promise.all([
+        this.courseService.getCourses(),
+        // A batch loading problem must not hide the courses themselves
+        this.courseService.getAllBatches().catch((batchError) => {
+          console.error('Failed to load batches:', batchError);
+          return [] as CourseBatch[];
+        }),
+      ]);
 
-      this.courses.set(
-        data.map((course) => ({
-          id: course.id,
-          title: course.title,
-          description: course.description || '',
-          createdAt: course.created_at,
-          status: course.status as CourseStatus,
-          duration: course.duration || '',
-          price: Number(course.price),
-          level: course.level as CourseLevel,
-          type: course.type as Course['type'],
-          thumbnail: course.thumbnail || '',
-        })),
-      );
+      this.courses.set(courses);
+      this.allBatches.set(batches);
     } catch (error) {
       console.error('Failed to load courses:', error);
 
@@ -656,27 +806,94 @@ export class CoursesComponent implements OnInit {
     }
   }
 
-  async saveCourse(input: CourseInput): Promise<void> {
+  async saveCourse(payload: CourseFormSavePayload): Promise<void> {
+    if (this.saving()) return;
+
     this.saving.set(true);
 
-    try {
-      const id = this.editingId();
+    const courseId = this.editingId();
+    let createdNewId: number | null = null;
 
-      if (id !== null) {
-        await this.courseService.updateCourse(id, input);
-        this.toast.success('Course updated successfully.');
+    try {
+      let savedCourseId: number;
+
+      // 1. Save course first
+      if (courseId !== null) {
+        await this.courseService.updateCourse(courseId, payload.course);
+        savedCourseId = courseId;
       } else {
-        await this.courseService.createCourse(input);
-        this.toast.success('Course created successfully.');
+        const created = await this.courseService.createCourse(payload.course);
+        savedCourseId = created.id;
+        createdNewId = created.id;
       }
+
+      // 2. Fetch existing batches
+      const oldBatches = await this.courseService.getBatches(savedCourseId);
+      const oldBatchIds = new Set(oldBatches.map((batch) => batch.id));
+
+      const incomingExistingIds = new Set(
+        payload.batches
+          .map((batch) => batch.id)
+          .filter((id): id is number => id !== undefined),
+      );
+
+      // 3. Make sure existing batch IDs belong to this course
+      for (const id of incomingExistingIds) {
+        if (!oldBatchIds.has(id)) {
+          throw new Error('Invalid batch ID received for this course.');
+        }
+      }
+
+      // 4. Create or update batches
+      for (const batch of payload.batches) {
+        const batchInput: CourseBatchInput = {
+          course_id: savedCourseId,
+          batch_name: batch.batch_name.trim(),
+          batch_code: batch.batch_code.trim().toUpperCase(),
+          start_date: batch.start_date,
+          end_date: batch.end_date,
+          status: batch.status,
+        };
+
+        if (batch.id !== undefined) {
+          await this.courseService.updateBatch(batch.id, batchInput);
+        } else {
+          await this.courseService.createBatch(batchInput);
+        }
+      }
+
+      // 5. Delete batches removed from the form
+      for (const oldBatch of oldBatches) {
+        if (!incomingExistingIds.has(oldBatch.id)) {
+          await this.courseService.deleteBatch(oldBatch.id);
+        }
+      }
+
+      this.toast.success(
+        courseId !== null
+          ? 'Course and batches updated successfully.'
+          : 'Course and batches created successfully.',
+      );
 
       this.closeForm();
       await this.loadCourses();
     } catch (error) {
-      console.error('Failed to save course:', error);
+      console.error('Failed to save course and batches:', error);
+
+      // Roll back a half-created course so no orphan is left behind
+      if (createdNewId !== null) {
+        try {
+          await this.courseService.deleteCourse(createdNewId);
+        } catch (rollbackError) {
+          console.error('Rollback failed:', rollbackError);
+        }
+      }
+
+      // Supabase errors are plain objects (not Error instances), so read .message directly
+      const message = (error as { message?: string } | null)?.message;
 
       this.toast.error(
-        'Course could not be saved. Please check your Supabase access policies.',
+        message || 'Course or batch could not be saved. Check Supabase policies.',
       );
     } finally {
       this.saving.set(false);
@@ -707,7 +924,7 @@ export class CoursesComponent implements OnInit {
         this.closeDetails();
       }
 
-      this.toast.error('Course deleted successfully.', 'Course deleted');
+      this.toast.success('Course deleted successfully.');
       this.courseToDelete.set(null);
 
       await this.loadCourses();

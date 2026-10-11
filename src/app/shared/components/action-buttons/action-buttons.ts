@@ -1,4 +1,3 @@
-
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { IconComponent } from '../icon/icon';
 
@@ -24,8 +23,8 @@ import { IconComponent } from '../icon/icon';
         <button
           type="button"
           (click)="editClick.emit()"
-          title="Edit course"
-          aria-label="Edit course"
+          title="Edit"
+          aria-label="Edit"
           class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-600 transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-300"
         >
           <app-icon name="pencil" [size]="18" />
@@ -37,8 +36,8 @@ import { IconComponent } from '../icon/icon';
           type="button"
           (click)="deleteClick.emit()"
           [disabled]="deleteDisabled || deleteLoading"
-          [title]="deleteLoading ? 'Deleting...' : 'Delete course'"
-          aria-label="Delete course"
+          [title]="deleteLoading ? 'Deleting...' : 'Delete'"
+          aria-label="Delete"
           class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-300 disabled:cursor-not-allowed disabled:opacity-50"
         >
           @if (deleteLoading) {
@@ -63,4 +62,3 @@ export class ActionButtonsComponent {
   @Output() editClick = new EventEmitter<void>();
   @Output() deleteClick = new EventEmitter<void>();
 }
-

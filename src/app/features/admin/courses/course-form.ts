@@ -2,43 +2,60 @@ import {
   Component,
   EventEmitter,
   Input,
-  Output,
   OnChanges,
-  OnDestroy,
+  Output,
+  SimpleChanges,
   inject,
 } from '@angular/core';
+
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  CourseInput,
-  CourseService,
-} from '../../../core/services/course.service';
+
 import { IconComponent } from '../../../shared/components/icon/icon';
-import { CoverImageComponent } from '../../../shared/components/cover-image/cover-image';
+import { CourseInput, CourseService } from '../../../core/services/course.service';
+import {
+  BatchStatus,
+  CourseBatch,
+  CourseLevel,
+  CourseStatus,
+  CourseType,
+} from './courses.models';
+
+export interface CourseBatchDraft {
+  id?: number;
+  batch_name: string;
+  batch_code: string;
+  start_date: string;
+  end_date: string;
+  status: BatchStatus;
+}
+
+export interface CourseFormSavePayload {
+  course: CourseInput;
+  batches: CourseBatchDraft[];
+}
 
 @Component({
   selector: 'app-course-form',
   standalone: true,
-  imports: [FormsModule, IconComponent, CoverImageComponent],
-  host: { '(document:keydown.escape)': 'cancel.emit()' },
+  imports: [CommonModule, FormsModule, IconComponent],
   template: `
-    <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"
-      (click)="onBackdropClick($event)"
-    >
-      <section
-        class="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+      <div
+        class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="course-form-title"
+        aria-label="Course form"
       >
-        <!-- Header (fixed) -->
-        <header class="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
+
+        <!-- Header -->
+        <div class="flex shrink-0 items-center justify-between border-b border-slate-100 px-6 py-4">
           <div>
-            <h2 id="course-form-title" class="text-xl font-bold text-slate-900">
-              {{ course ? 'Edit Course' : 'Create New Course' }}
+            <h2 class="text-lg font-bold text-slate-900">
+              {{ course ? 'Edit Course' : 'Create Course' }}
             </h2>
-            <p class="mt-1 text-sm text-slate-500">
-              {{ course ? 'Update the details of this course.' : 'Fill in the details to add a new course.' }}
+            <p class="mt-0.5 text-sm text-slate-500">
+              Manage course details and batches.
             </p>
           </div>
 
@@ -50,424 +67,541 @@ import { CoverImageComponent } from '../../../shared/components/cover-image/cove
           >
             <app-icon name="x" />
           </button>
-        </header>
+        </div>
 
-        <form (ngSubmit)="submit()" #courseForm="ngForm" class="flex min-h-0 flex-1 flex-col">
+        <form
+          class="flex min-h-0 flex-1 flex-col"
+          (ngSubmit)="submit()"
+          #courseForm="ngForm"
+        >
+          <!-- Scrollable body -->
+          <div class="min-h-0 flex-1 overflow-y-auto">
+            <div class="space-y-5 p-6">
 
-          <!-- Body (scrolls) -->
-          <div class="min-h-0 flex-1 overflow-y-auto px-6 py-6">
-            <div class="grid gap-8 lg:grid-cols-5">
+              <!-- Course details -->
+              <section>
+                <h3 class="mb-4 text-base font-semibold text-slate-900">
+                  Course Details
+                </h3>
 
-              <!-- Left column: details -->
-              <div class="space-y-8 lg:col-span-3">
+                <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
 
-                <section class="space-y-5">
-                  <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Basic information
-                  </h3>
-
-                  <div>
-                    <label for="title" [class]="labelClass">Course title *</label>
+                  <div class="md:col-span-2">
+                    <label class="mb-1.5 block text-sm font-medium text-slate-700">
+                      Course Title *
+                    </label>
                     <input
-                      id="title"
+                      type="text"
                       name="title"
                       [(ngModel)]="form.title"
                       required
-                      maxlength="150"
-                      placeholder="e.g. Full Stack Web Development"
-                      [class]="fieldClass"
+                      maxlength="200"
+                      placeholder="Enter course title"
+                      class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+
+                  <div class="md:col-span-2">
+                    <label class="mb-1.5 block text-sm font-medium text-slate-700">
+                      Description
+                    </label>
+                    <textarea
+                      name="description"
+                      [(ngModel)]="form.description"
+                      rows="3"
+                      placeholder="Describe this course"
+                      class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    ></textarea>
+                  </div>
+
+                  <div>
+                    <label class="mb-1.5 block text-sm font-medium text-slate-700">
+                      Duration *
+                    </label>
+                    <input
+                      type="text"
+                      name="duration"
+                      [(ngModel)]="form.duration"
+                      required
+                      placeholder="e.g. 3 months"
+                      class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     />
                   </div>
 
                   <div>
-                    <label for="description" [class]="labelClass">Description</label>
-                    <textarea
-                      id="description"
-                      name="description"
-                      [(ngModel)]="form.description"
-                      rows="5"
-                      placeholder="What will students learn in this course?"
-                      [class]="fieldClass + ' resize-y'"
-                    ></textarea>
+                    <label class="mb-1.5 block text-sm font-medium text-slate-700">
+                      Price *
+                    </label>
+                    <input
+                      type="number"
+                      name="price"
+                      [(ngModel)]="form.price"
+                      required
+                      min="0"
+                      placeholder="Enter price"
+                      class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
                   </div>
-                </section>
 
-                <section class="space-y-5">
-                  <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Course details
-                  </h3>
+                  <div>
+                    <label class="mb-1.5 block text-sm font-medium text-slate-700">
+                      Course Level *
+                    </label>
+                    <select
+                      name="level"
+                      [(ngModel)]="form.level"
+                      required
+                      class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    >
+                      <option value="Basic">Basic</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Expert">Expert</option>
+                    </select>
+                  </div>
 
-                  <div class="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label class="mb-1.5 block text-sm font-medium text-slate-700">
+                      Course Type *
+                    </label>
+                    <select
+                      name="type"
+                      [(ngModel)]="form.type"
+                      required
+                      class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    >
+                      <option value="single">Single</option>
+                      <option value="bundle">Bundle</option>
+                    </select>
+                  </div>
 
-                    <div>
-                      <label for="duration" [class]="labelClass">Duration *</label>
-                      <input
-                        id="duration"
-                        name="duration"
-                        [(ngModel)]="form.duration"
-                        required
-                        placeholder="e.g. 18 months"
-                        [class]="fieldClass"
-                      />
-                    </div>
+                  <!-- Thumbnail upload -->
+                  <div class="md:col-span-2">
+                    <label class="mb-1.5 block text-sm font-medium text-slate-700">
+                      Course Thumbnail
+                    </label>
 
-                    <div>
-                      <label for="price" [class]="labelClass">Price (USD) *</label>
-                      <div class="relative">
-                        <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400">$</span>
-                        <input
-                          id="price"
-                          name="price"
-                          type="number"
-                          [(ngModel)]="form.price"
-                          required
-                          min="0"
-                          step="0.01"
-                          [class]="fieldClass + ' pl-8'"
+                    <input
+                      #fileInput
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      class="hidden"
+                      (change)="onFileSelected($event)"
+                    />
+
+                    <button
+                      *ngIf="!form.thumbnail"
+                      type="button"
+                      (click)="fileInput.click()"
+                      [disabled]="uploading"
+                      class="flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-6 text-center transition hover:border-blue-500 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <span
+                        *ngIf="uploading"
+                        class="mb-3 h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"
+                      ></span>
+
+                      <span class="text-sm font-semibold text-slate-700">
+                        {{ uploading ? 'Uploading image...' : 'Click to upload image' }}
+                      </span>
+                      <span class="mt-1 text-xs text-slate-500">
+                        JPG, PNG or WebP, up to 5 MB
+                      </span>
+                    </button>
+
+                    <div *ngIf="form.thumbnail" class="space-y-3">
+                      <div class="w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                        <img
+                          [src]="form.thumbnail"
+                          alt="Course thumbnail preview"
+                          class="mx-auto max-h-56 w-auto max-w-full object-contain"
                         />
                       </div>
-                    </div>
 
-                    <div>
-                      <label for="level" [class]="labelClass">Level</label>
-                      <div class="relative">
-                        <select id="level" name="level" [(ngModel)]="form.level" [class]="selectClass">
-                          <option value="Basic">Basic</option>
-                          <option value="Intermediate">Intermediate</option>
-                          <option value="Expert">Expert</option>
-                        </select>
-                        <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-                          <app-icon name="chevron-down" [size]="16" />
-                        </span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label for="type" [class]="labelClass">Course type</label>
-                      <div class="relative">
-                        <select id="type" name="type" [(ngModel)]="form.type" [class]="selectClass">
-                          <option value="single">Single Course</option>
-                          <option value="bundle">Bundle Course</option>
-                        </select>
-                        <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-                          <app-icon name="chevron-down" [size]="16" />
-                        </span>
-                      </div>
-                    </div>
-
-                  </div>
-                </section>
-              </div>
-
-              <!-- Right column: thumbnail and status -->
-              <div class="space-y-8 lg:col-span-2">
-
-                <section>
-                  <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Course thumbnail
-                  </h3>
-
-                  <div class="mt-4">
-                    @if (imagePreview) {
-                      <app-cover-image
-                        class="block h-64 rounded-xl border border-slate-200"
-                        [src]="imagePreview"
-                        alt="Course thumbnail preview"
-                      />
-
-                      @if (selectedImage) {
-                        <p class="mt-2 truncate text-xs text-slate-500">
-                          {{ selectedImage.name }}
-                        </p>
-                      }
-
-                      <div class="mt-3 flex items-center gap-2">
-                        <label
-                          for="thumbnailFile"
-                          class="inline-flex cursor-pointer items-center rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                      <div class="flex flex-wrap gap-3">
+                        <button
+                          type="button"
+                          (click)="fileInput.click()"
+                          [disabled]="uploading"
+                          class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
                         >
-                          Change image
-                        </label>
+                          {{ uploading ? 'Uploading...' : 'Change Image' }}
+                        </button>
 
                         <button
                           type="button"
-                          (click)="removeImage(thumbnailInput)"
-                          class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                          (click)="removeThumbnail()"
+                          [disabled]="uploading"
+                          class="rounded-xl px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                         >
-                          <app-icon name="trash-2" [size]="16" />
                           Remove
                         </button>
                       </div>
-                    } @else {
-                      <label
-                        for="thumbnailFile"
-                        class="flex h-64 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-5 text-center transition hover:border-blue-500 hover:bg-blue-50"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="34"
-                          height="34"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="1.7"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          class="mb-3 text-slate-500"
-                          aria-hidden="true"
-                        >
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                          <polyline points="17 8 12 3 7 8" />
-                          <line x1="12" x2="12" y1="3" y2="15" />
-                        </svg>
+                    </div>
 
-                        <span class="text-sm font-semibold text-slate-700">
-                          Choose an image from your computer
-                        </span>
-                        <span class="mt-1 text-xs text-slate-500">
-                          PNG, JPG or WEBP, up to 5 MB
-                        </span>
-                      </label>
-                    }
-
-                    <input
-                      #thumbnailInput
-                      id="thumbnailFile"
-                      name="thumbnailFile"
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      (change)="onImageSelected($event)"
-                      class="sr-only"
-                    />
-
-                    <p class="mt-3 text-xs text-slate-400">
-                      For a sharp result, use an image at least 1200 px wide.
+                    <p *ngIf="uploadError" class="mt-2 text-sm text-red-600">
+                      {{ uploadError }}
                     </p>
-
-                    @if (imageError) {
-                      <p class="mt-2 text-sm text-red-600" role="alert">{{ imageError }}</p>
-                    }
                   </div>
-                </section>
 
-                <section>
-                  <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Publication status
-                  </h3>
-
-                  <div class="mt-4 grid grid-cols-2 gap-3">
-                    <label
-                      class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm transition hover:bg-slate-50 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50"
-                    >
-                      <input
-                        type="radio"
-                        name="status"
-                        value="Drafted"
-                        [(ngModel)]="form.status"
-                        class="h-4 w-4 accent-blue-600"
-                      />
-                      <span>
-                        <span class="block font-semibold text-slate-800">Drafted</span>
-                        <span class="block text-xs text-slate-500">Not visible yet</span>
-                      </span>
+                  <div>
+                    <label class="mb-1.5 block text-sm font-medium text-slate-700">
+                      Publication Status *
                     </label>
-
-                    <label
-                      class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 text-sm transition hover:bg-slate-50 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50"
+                    <select
+                      name="status"
+                      [(ngModel)]="form.status"
+                      required
+                      class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     >
-                      <input
-                        type="radio"
-                        name="status"
-                        value="Published"
-                        [(ngModel)]="form.status"
-                        class="h-4 w-4 accent-blue-600"
-                      />
-                      <span>
-                        <span class="block font-semibold text-slate-800">Published</span>
-                        <span class="block text-xs text-slate-500">Live for students</span>
-                      </span>
-                    </label>
+                      <option value="Drafted">Drafted</option>
+                      <option value="Published">Published</option>
+                    </select>
                   </div>
-                </section>
+                </div>
+              </section>
 
-              </div>
+              <!-- Batch management -->
+              <section class="border-t border-slate-200 pt-6">
+                <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 class="text-base font-semibold text-slate-900">
+                      Course Batches
+                    </h3>
+                    <p class="mt-0.5 text-sm text-slate-500">
+                      Add one or more batches for this course. Batches are optional.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    (click)="addBatch()"
+                    class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                  >
+                    + Add Batch
+                  </button>
+                </div>
+
+                <p
+                  *ngIf="batches.length === 0"
+                  class="rounded-xl bg-slate-50 p-4 text-center text-sm text-slate-500"
+                >
+                  No batches added yet. Click "Add Batch" to create one.
+                </p>
+
+                <div class="space-y-3">
+                  <div
+                    *ngFor="let batch of batches; let i = index; trackBy: trackBatch"
+                    class="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                  >
+                    <div class="mb-3 flex items-center justify-between">
+                      <h4 class="text-sm font-semibold text-slate-900">
+                        Batch {{ i + 1 }}
+                      </h4>
+
+                      <button
+                        type="button"
+                        (click)="removeBatch(i)"
+                        class="rounded-lg px-3 py-1.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+
+                      <div>
+                        <label class="mb-1.5 block text-sm font-medium text-slate-700">
+                          Batch Name *
+                        </label>
+                        <input
+                          type="text"
+                          [(ngModel)]="batch.batch_name"
+                          [ngModelOptions]="{ standalone: true }"
+                          placeholder="e.g. Morning Batch"
+                          class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        />
+                      </div>
+
+                      <div>
+                        <label class="mb-1.5 block text-sm font-medium text-slate-700">
+                          Batch Code *
+                        </label>
+                        <input
+                          type="text"
+                          [(ngModel)]="batch.batch_code"
+                          [ngModelOptions]="{ standalone: true }"
+                          (ngModelChange)="batch.batch_code = $event.toUpperCase()"
+                          placeholder="e.g. PY-MOR-01"
+                          class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm uppercase text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        />
+                      </div>
+
+                      <div>
+                        <label class="mb-1.5 block text-sm font-medium text-slate-700">
+                          Start Date *
+                        </label>
+                        <input
+                          type="date"
+                          [(ngModel)]="batch.start_date"
+                          [ngModelOptions]="{ standalone: true }"
+                          class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        />
+                      </div>
+
+                      <div>
+                        <label class="mb-1.5 block text-sm font-medium text-slate-700">
+                          End Date *
+                        </label>
+                        <input
+                          type="date"
+                          [(ngModel)]="batch.end_date"
+                          [ngModelOptions]="{ standalone: true }"
+                          [min]="batch.start_date || null"
+                          class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        />
+                      </div>
+
+                      <div class="md:col-span-2">
+                        <label class="mb-1.5 block text-sm font-medium text-slate-700">
+                          Batch Status *
+                        </label>
+                        <select
+                          [(ngModel)]="batch.status"
+                          [ngModelOptions]="{ standalone: true }"
+                          class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        >
+                          <option value="Upcoming">Upcoming</option>
+                          <option value="Ongoing">Ongoing</option>
+                          <option value="Completed">Completed</option>
+                          <option value="Cancelled">Cancelled</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <p
+                      *ngIf="batchErrors[i]"
+                      class="mt-3 text-sm text-red-600"
+                    >
+                      {{ batchErrors[i] }}
+                    </p>
+                  </div>
+                </div>
+
+                <p *ngIf="generalError" class="mt-4 text-sm text-red-600">
+                  {{ generalError }}
+                </p>
+              </section>
             </div>
           </div>
 
-          <!-- Footer (fixed) -->
-          <footer class="flex shrink-0 items-center justify-end gap-3 border-t border-slate-100 bg-white px-6 py-4">
+          <!-- Footer -->
+          <div class="flex shrink-0 justify-end gap-3 border-t border-slate-100 bg-white px-6 py-4">
             <button
               type="button"
               (click)="cancel.emit()"
-              class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              [disabled]="saving"
+              class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
             >
               Cancel
             </button>
 
             <button
               type="submit"
-              [disabled]="courseForm.invalid || saving || uploadingImage"
-              class="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              [disabled]="saving || uploading || courseForm.invalid"
+              class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {{
-                uploadingImage
-                  ? 'Uploading image...'
-                  : saving
-                    ? 'Saving...'
-                    : course
-                      ? 'Save Changes'
-                      : 'Create Course'
-              }}
+              {{ saving ? 'Saving...' : (course ? 'Update Course' : 'Create Course') }}
             </button>
-          </footer>
+          </div>
         </form>
-      </section>
+      </div>
     </div>
   `,
 })
-export class CourseFormComponent implements OnChanges, OnDestroy {
-  private readonly courseService = inject(CourseService);
+export class CourseFormComponent implements OnChanges {
+  private courseService = inject(CourseService);
 
   @Input() course: CourseInput | null = null;
+  @Input() existingBatches: CourseBatch[] = [];
   @Input() saving = false;
 
-  @Output() save = new EventEmitter<CourseInput>();
+  @Output() save = new EventEmitter<CourseFormSavePayload>();
   @Output() cancel = new EventEmitter<void>();
 
-  readonly labelClass = 'mb-1.5 block text-sm font-medium text-slate-700';
-  readonly fieldClass =
-    'w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
-  readonly selectClass = this.fieldClass + ' appearance-none pr-10';
+  form: CourseInput = this.emptyCourse();
+  batches: CourseBatchDraft[] = [];
+  batchErrors: Record<number, string> = {};
+  generalError = '';
 
-  form: CourseInput = this.emptyForm();
+  uploading = false;
+  uploadError = '';
 
-  selectedImage: File | null = null;
-  imagePreview = '';
-  imageError = '';
-  uploadingImage = false;
+  async onFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
 
-  private objectUrl: string | null = null;
+    if (!file) return;
 
-  ngOnChanges(): void {
-    this.clearObjectUrl();
+    this.uploadError = '';
+    this.uploading = true;
 
-    this.form = this.course ? { ...this.course } : this.emptyForm();
-
-    this.selectedImage = null;
-    this.imagePreview = this.isUrl(this.form.thumbnail) ? this.form.thumbnail : '';
-    this.imageError = '';
-    this.uploadingImage = false;
+    try {
+      this.form.thumbnail = await this.courseService.uploadThumbnail(file);
+    } catch (error) {
+      this.uploadError =
+        error instanceof Error ? error.message : 'Image could not be uploaded.';
+    } finally {
+      this.uploading = false;
+      input.value = '';
+    }
   }
 
-  ngOnDestroy(): void {
-    this.clearObjectUrl();
+  removeThumbnail(): void {
+    this.form.thumbnail = '';
+    this.uploadError = '';
   }
 
-  private emptyForm(): CourseInput {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['course']) {
+      this.form = this.course
+        ? { ...this.course }
+        : this.emptyCourse();
+    }
+
+    if (changes['existingBatches']) {
+      this.batches = (this.existingBatches ?? []).map((batch) => ({
+        id: batch.id,
+        batch_name: batch.batch_name,
+        batch_code: batch.batch_code,
+        start_date: batch.start_date,
+        end_date: batch.end_date,
+        status: batch.status,
+      }));
+
+      this.batchErrors = {};
+      this.generalError = '';
+    }
+  }
+
+  private emptyCourse(): CourseInput {
     return {
       title: '',
       description: '',
       duration: '',
       price: 0,
-      level: 'Basic',
-      type: 'single',
+      level: 'Basic' as CourseLevel,
+      type: 'single' as CourseType,
       thumbnail: '',
-      status: 'Drafted',
+      status: 'Drafted' as CourseStatus,
     };
   }
 
-  private isUrl(value: string | null | undefined): boolean {
-    return (
-      !!value &&
-      (value.startsWith('https://') ||
-        value.startsWith('http://') ||
-        value.startsWith('data:image/'))
-    );
+  addBatch(): void {
+    this.batches = [
+      ...this.batches,
+      {
+        batch_name: '',
+        batch_code: '',
+        start_date: '',
+        end_date: '',
+        status: 'Upcoming',
+      },
+    ];
   }
 
-  onImageSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+  removeBatch(index: number): void {
+    this.batches = this.batches.filter((_, i) => i !== index);
 
-    this.imageError = '';
+    const updatedErrors: Record<number, string> = {};
+    this.batches.forEach((_, i) => {
+      if (this.batchErrors[i] && i < index) {
+        updatedErrors[i] = this.batchErrors[i];
+      } else if (this.batchErrors[i + 1] && i >= index) {
+        updatedErrors[i] = this.batchErrors[i + 1];
+      }
+    });
 
-    if (!file) {
-      return;
-    }
-
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-
-    if (!allowedTypes.includes(file.type)) {
-      this.imageError = 'Please select a JPG, PNG or WEBP image.';
-      input.value = '';
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      this.imageError = 'Image size must not exceed 5 MB.';
-      input.value = '';
-      return;
-    }
-
-    this.clearObjectUrl();
-
-    this.selectedImage = file;
-    this.objectUrl = URL.createObjectURL(file);
-    this.imagePreview = this.objectUrl;
+    this.batchErrors = updatedErrors;
+    this.generalError = '';
   }
 
-  removeImage(input: HTMLInputElement): void {
-    this.clearObjectUrl();
-
-    this.selectedImage = null;
-    this.imagePreview = '';
-    this.imageError = '';
-    this.form.thumbnail = '';
-    input.value = '';
+  trackBatch(index: number, batch: CourseBatchDraft): number | string {
+    return batch.id ?? `new-${index}`;
   }
 
-  async submit(): Promise<void> {
-    if (this.uploadingImage || this.saving) {
+  submit(): void {
+    this.generalError = '';
+    this.batchErrors = {};
+
+    if (!this.form.title.trim()) {
+      this.generalError = 'Please enter a course title.';
       return;
     }
 
-    this.imageError = '';
-    this.uploadingImage = true;
+    if (!this.form.duration.trim()) {
+      this.generalError = 'Please enter the course duration.';
+      return;
+    }
 
-    try {
-      let thumbnailUrl = this.form.thumbnail.trim();
+    if (Number(this.form.price) < 0 || !Number.isFinite(Number(this.form.price))) {
+      this.generalError = 'Please enter a valid course price.';
+      return;
+    }
 
-      if (this.selectedImage) {
-        thumbnailUrl = await this.courseService.uploadThumbnail(
-          this.selectedImage,
-        );
+    const seenCodes = new Set<string>();
+
+    this.batches.forEach((batch, index) => {
+      if (
+        !batch.batch_name.trim() ||
+        !batch.batch_code.trim() ||
+        !batch.start_date ||
+        !batch.end_date
+      ) {
+        this.batchErrors[index] =
+          'Please complete the batch name, code, start date, and end date.';
+        return;
       }
 
-      this.save.emit({
-        ...this.form,
-        title: this.form.title.trim(),
-        description: this.form.description.trim(),
-        thumbnail: thumbnailUrl,
-      });
-    } catch (error) {
-      console.error('Thumbnail upload failed:', error);
-      this.imageError =
-        'Image upload failed. Please check your Supabase Storage bucket and policies, then try again.';
-    } finally {
-      this.uploadingImage = false;
-    }
-  }
+      if (batch.end_date < batch.start_date) {
+        this.batchErrors[index] =
+          'End date must be on or after the start date.';
+        return;
+      }
 
-  onBackdropClick(event: MouseEvent): void {
-    if (event.target === event.currentTarget) {
-      this.cancel.emit();
-    }
-  }
+      const code = batch.batch_code.trim().toUpperCase();
 
-  private clearObjectUrl(): void {
-    if (this.objectUrl) {
-      URL.revokeObjectURL(this.objectUrl);
-      this.objectUrl = null;
+      if (seenCodes.has(code)) {
+        this.batchErrors[index] =
+          'This batch code is duplicated. Each batch needs a unique code.';
+        return;
+      }
+
+      seenCodes.add(code);
+    });
+
+    if (Object.keys(this.batchErrors).length > 0) {
+      this.generalError = 'Please correct the batch errors before saving.';
+      return;
     }
+
+    const coursePayload: CourseInput = {
+      ...this.form,
+      title: this.form.title.trim(),
+      description: this.form.description?.trim() ?? '',
+      duration: this.form.duration.trim(),
+      price: Number(this.form.price),
+      thumbnail: this.form.thumbnail?.trim() ?? '',
+    };
+
+    const batchPayload = this.batches.map((batch) => ({
+      ...batch,
+      batch_name: batch.batch_name.trim(),
+      batch_code: batch.batch_code.trim().toUpperCase(),
+    }));
+
+    this.save.emit({
+      course: coursePayload,
+      batches: batchPayload,
+    });
   }
 }
