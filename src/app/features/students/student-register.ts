@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { FunctionsFetchError, FunctionsHttpError } from '@supabase/supabase-js';
 import { SupabaseService } from '../../core/services/supabase.service';
 
 type DbRow = Record<string, unknown>;
@@ -181,7 +182,7 @@ interface CatalogItem {
                       Residential Address <span class="text-rose-500">*</span>
                     </label>
                     <textarea id="student-address" name="address"
-                      [(ngModel)]="address" required maxlength="500" rows="2.5"
+                      [(ngModel)]="address" required maxlength="500" rows="3"
                       placeholder="House no, street, area, city"
                       class="w-full resize-y rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"></textarea>
                   </div>
@@ -583,6 +584,24 @@ export class StudentRegisterComponent implements OnInit {
         });
 
       if (error) {
+        if (error instanceof FunctionsHttpError) {
+          // Function ran, but it returned an error response
+          const details = await error.context.json().catch(() => null);
+          throw new Error(
+            details?.error ??
+              details?.message ??
+              'Function returned an error.',
+          );
+        }
+
+        if (error instanceof FunctionsFetchError) {
+          // Request never reached the function
+          console.error('Edge Function fetch error:', error);
+          throw new Error(
+            'Server se connect nahi ho paya. Edge Function deploy, CORS aur environment.ts check karein.',
+          );
+        }
+
         throw new Error(error.message);
       }
 
