@@ -19,6 +19,7 @@
     "@angular/router": "^22.2.0",
     "@supabase/supabase-js": "^2.117.3",
     "@tailwindcss/postcss": "^4.3.3",
+    "hls.js": "^1.7.3",
     "postcss": "^8.5.29",
     "rxjs": "~7.8.0",
     "tailwindcss": "^4.3.3",
