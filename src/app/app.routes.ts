@@ -1,7 +1,17 @@
+
 import { Routes } from '@angular/router';
+
+// Main Landing Page
+import { HomeComponent } from './features/home/home';
 
 // Admin Auth
 import { AdminLoginComponent } from './features/admin/auth/login/login';
+
+// Student Registration
+import { StudentRegisterComponent } from './features/students/student-register';
+
+// Auth Pages
+import { SetPasswordComponent } from './features/auth/set-password/set-password';
 
 // Admin Layout & Dashboard
 import { AdminLayoutComponent } from './features/admin/layout/admin-layout';
@@ -10,6 +20,11 @@ import { AdminDashboardComponent } from './features/admin/dashboard/dashboard';
 // Courses & Students
 import { CoursesComponent } from './features/admin/courses/courses';
 import { StudentsComponent } from './features/students/students';
+import { SettingsComponent } from './features/admin/settings/settings';
+
+// Batches & Live Classes
+import { Batches } from './features/admin/batches/batches';
+import { LiveClasses } from './features/admin/liveclasses/live-classes';
 
 // Quizzes
 import { QuizFormComponent } from './features/admin/quizzes/quiz-form';
@@ -21,6 +36,12 @@ import { AssignmentsComponent } from './features/admin/assignments/assignments';
 import { AssignmentFormComponent } from './features/admin/assignments/assignment-form';
 import { AssignmentDetailsComponent } from './features/admin/assignments/assignment-details';
 
+// Announcements
+import { AdminAnnouncements } from './features/admin/announcements/announcements';
+
+// Results
+import { AdminResults } from './features/admin/results/results';
+
 // Coming Soon
 import { ComingSoonComponent } from './features/admin/coming-soon/coming-soon';
 
@@ -28,15 +49,34 @@ import { ComingSoonComponent } from './features/admin/coming-soon/coming-soon';
 import { adminGuard } from './core/guards/admin.guard';
 import { guestGuard } from './core/guards/guest.guard';
 
-const upcoming = [
-  'announcements',
-  'earnings',
-  'reports',
-  'add-ons',
-  'settings',
-];
+const upcoming = ['lectures'];
 
 export const routes: Routes = [
+
+  // Main Landing Page
+  {
+    path: '',
+    component: HomeComponent,
+    pathMatch: 'full',
+    title: 'Welcome | EduCore',
+  },
+
+  // Student Registration
+  // URL: /student/register
+  {
+    path: 'student/register',
+    component: StudentRegisterComponent,
+    title: 'Student Registration | EduCore',
+  },
+
+  // Set Password
+  // URL: /auth/set-password
+  {
+    path: 'auth/set-password',
+    component: SetPasswordComponent,
+    title: 'Set Password | EduCore',
+  },
+
   // Admin Login
   {
     path: 'admin/login',
@@ -51,6 +91,8 @@ export const routes: Routes = [
     component: AdminLayoutComponent,
     canActivate: [adminGuard],
     children: [
+
+      // Default Admin Route
       {
         path: '',
         redirectTo: 'dashboard',
@@ -71,6 +113,20 @@ export const routes: Routes = [
         title: 'Courses | EduCore',
       },
 
+      // Batches
+      {
+        path: 'batches',
+        component: Batches,
+        title: 'Batches | EduCore',
+      },
+
+      // Live Classes
+      {
+        path: 'live-classes',
+        component: LiveClasses,
+        title: 'Live Classes | EduCore',
+      },
+
       // Students
       {
         path: 'students',
@@ -78,7 +134,7 @@ export const routes: Routes = [
         title: 'Students | EduCore',
       },
 
-      // Quizzes List
+      // Quizzes
       {
         path: 'quizzes',
         component: QuizzesComponent,
@@ -106,7 +162,7 @@ export const routes: Routes = [
         title: 'Edit Quiz | EduCore',
       },
 
-      // Assignments: list page stays visible behind the create / view / edit modals
+      // Assignments
       {
         path: 'assignments',
         component: AssignmentsComponent,
@@ -130,6 +186,27 @@ export const routes: Routes = [
         ],
       },
 
+      // Settings
+      {
+        path: 'settings',
+        component: SettingsComponent,
+        title: 'Settings | EduCore',
+      },
+
+      // Announcements
+      {
+        path: 'announcements',
+        component: AdminAnnouncements,
+        title: 'Announcements | EduCore',
+      },
+
+      // Results
+      {
+        path: 'results',
+        component: AdminResults,
+        title: 'Results | EduCore',
+      },
+
       // Upcoming Features
       ...upcoming.map((path) => ({
         path,
@@ -139,16 +216,9 @@ export const routes: Routes = [
     ],
   },
 
-  // Default Route
-  {
-    path: '',
-    redirectTo: 'admin/login',
-    pathMatch: 'full',
-  },
-
   // Unknown Routes
   {
     path: '**',
-    redirectTo: 'admin/login',
+    redirectTo: '',
   },
 ];

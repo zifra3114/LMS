@@ -58,13 +58,14 @@ export class SidebarComponent {
   items: NavItem[] = [
     { label: 'Dashboard', path: '/admin/dashboard', icon: 'dashboard' },
     { label: 'Courses', path: '/admin/courses', icon: 'book-open' },
+    { label: 'Batches', path: '/admin/batches', icon: 'package' },
+    { label: 'Lectures', path: '/admin/lectures', icon: 'book-open' },
+    { label: 'Live Classes', path: '/admin/live-classes', icon: 'megaphone' },
     { label: 'Quizzes', path: '/admin/quizzes', icon: 'circle-help' },
     { label: 'Assignments', path: '/admin/assignments', icon: 'clipboard-list' },
+    { label: 'Results', path: '/admin/results', icon: 'chart-column' },
     { label: 'Announcements', path: '/admin/announcements', icon: 'megaphone' },
     { label: 'Students', path: '/admin/students', icon: 'graduation-cap' },
-    { label: 'Earnings', path: '/admin/earnings', icon: 'wallet' },
-    { label: 'Reports', path: '/admin/reports', icon: 'chart-column' },
-    { label: 'Add-ons', path: '/admin/add-ons', icon: 'package' },
     { label: 'Settings', path: '/admin/settings', icon: 'settings' },
   ];
 
