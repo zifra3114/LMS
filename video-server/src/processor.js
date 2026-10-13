@@ -62,7 +62,7 @@ export async function probeFile(ffprobePath, file) {
   ]);
 
   if (result.code !== 0) {
-    throw new Error('Ye file video ki tarah parhi nahi ja saki. Dusri file try karein.');
+    throw new Error('This file could not be read as a video. Please try a different file.');
   }
 
   const info = JSON.parse(result.stdout);
@@ -130,7 +130,7 @@ const tail = (text) =>
     .split('\n')
     .slice(-3)
     .join(' ')
-    .slice(0, 500) || 'FFmpeg ne video convert nahi ki.';
+    .slice(0, 500) || 'The video could not be converted.';
 
 /**
  * Convert karne ki line (queue). Ek waqt mein sirf ek video convert hoti hai taake
@@ -191,7 +191,7 @@ export function createProcessor({ config, storage, db, log = console }) {
     const workDir = storage.hlsNewDir(id);
 
     try {
-      if (!(await exists(source))) throw new Error('Upload ki hui file server par nahi mili.');
+      if (!(await exists(source))) throw new Error('The uploaded file could not be found on the server.');
 
       await db.updateLecture(id, {
         processing_status: 'Processing',
@@ -200,7 +200,7 @@ export function createProcessor({ config, storage, db, log = console }) {
       });
 
       const info = await probeFile(config.ffprobePath, source);
-      if (!info.video) throw new Error('Is file mein video track nahi hai.');
+      if (!info.video) throw new Error('This file does not contain a video track.');
 
       await removePath(workDir);
       await fsp.mkdir(workDir, { recursive: true });
@@ -242,7 +242,7 @@ export function createProcessor({ config, storage, db, log = console }) {
 
       if (result.code !== 0) throw new Error(tail(result.stderr));
       if (!(await exists(path.join(workDir, 'index.m3u8')))) {
-        throw new Error('FFmpeg ne playlist nahi banayi.');
+        throw new Error('The video could not be converted (no playlist was produced).');
       }
 
       // Nayi HLS tayyar hai: purani (agar thi) hata kar badal do

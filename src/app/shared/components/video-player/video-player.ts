@@ -26,7 +26,7 @@ const MAX_MEDIA_RECOVERIES = 3;
 
       @if (loading() && !error()) {
         <div class="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-white/80">
-          Video load ho rahi hai...
+          Loading video…
         </div>
       }
 
@@ -38,7 +38,7 @@ const MAX_MEDIA_RECOVERIES = 3;
             (click)="retry()"
             class="rounded-lg bg-white/10 px-4 py-2 font-semibold hover:bg-white/20"
           >
-            Dobara koshish karein
+            Try again
           </button>
         </div>
       }
@@ -124,10 +124,10 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
         video.src = url;
         this.loading.set(false);
       } else {
-        this.fail('Aapka browser ye video nahi chala sakta. Chrome ya Safari try karein.');
+        this.fail('Your browser cannot play this video. Please use Chrome, Edge, Firefox or Safari.');
       }
     } catch (error) {
-      this.fail((error as Error).message || 'Video load nahi ho saki.');
+      this.fail((error as Error).message || 'Unable to load the video.');
     }
   }
 
@@ -145,7 +145,7 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
         return;
       }
 
-      this.fail('Is video ko dekhne ki ijazat nahi ya session khatam ho gaya. Dobara login karein.');
+      this.fail('You do not have access to this video, or your session has expired. Please sign in again.');
       return;
     }
 
@@ -156,11 +156,11 @@ export class VideoPlayerComponent implements OnInit, OnDestroy {
     }
 
     if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-      this.fail('Video server se rabta toot gaya. Internet ya server check karein.');
+      this.fail('The connection to the video server was lost. Check your internet connection and try again.');
       return;
     }
 
-    this.fail('Video chalane mein masla aaya.');
+    this.fail('The video could not be played.');
   }
 
   private fail(message: string): void {

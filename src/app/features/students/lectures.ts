@@ -15,14 +15,14 @@ import { VideoPlayerComponent } from '../../shared/components/video-player/video
     <div class="space-y-6 p-6">
       <div>
         <h1 class="text-2xl font-bold text-slate-800">Recorded Lectures</h1>
-        <p class="text-sm text-slate-500">Aapke batch ki recorded lectures yahan milengi.</p>
+        <p class="text-sm text-slate-500">Recorded lectures for your batch appear here.</p>
       </div>
 
       @if (loading()) {
-        <p class="text-sm text-slate-500">Loading...</p>
+        <p class="text-sm text-slate-500">Loading lectures…</p>
       } @else if (lectures().length === 0) {
         <div class="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
-          Abhi aapke batch ki koi lecture upload nahi hui.
+          No lectures have been published for your batch yet.
         </div>
       } @else {
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -100,7 +100,8 @@ export class StudentLectures implements OnInit {
       this.lectures.set(await this.lectureService.getForMyBatches());
     } catch (e) {
       this.toast.error(
-        (e as { message?: string })?.message || 'Lectures load nahi ho sakin.',
+        (e as { message?: string })?.message || 'Please try again in a moment.',
+        'Unable to load lectures',
       );
     } finally {
       this.loading.set(false);

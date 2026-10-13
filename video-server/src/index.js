@@ -24,7 +24,7 @@ for (const id of await db.listProcessingIds()) {
     await db
       .updateLecture(id, {
         processing_status: 'Failed',
-        processing_error: 'Server dobara chala aur upload ki hui file nahi mili. Video dobara upload karein.',
+        processing_error: 'The server restarted and the uploaded file was lost. Please upload the video again.',
       })
       .catch(() => {});
   }

@@ -1,6 +1,5 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
-import { LiveClassService } from './liveclass.service';
 import { VIDEO_SERVER_URL } from '../config/video-server';
 
 export type LectureStatus = 'Published' | 'Drafted';
@@ -66,7 +65,6 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 })
 export class LectureService {
   private readonly supabase = inject(SupabaseService).client;
-  private readonly liveClassService = inject(LiveClassService);
 
   // ---------- Admin: lecture ki detail (Supabase) ----------
 
@@ -129,9 +127,27 @@ export class LectureService {
 
   // ---------- Student ----------
 
+  /** Login student ka batch: students.user_id = login ki id, students.batch_id = batch. */
+  private async getMyBatchIds(): Promise<number[]> {
+    const { data: auth, error: authError } = await this.supabase.auth.getUser();
+
+    if (authError) throw authError;
+    if (!auth.user) return [];
+
+    const { data, error } = await this.supabase
+      .from('students')
+      .select('batch_id')
+      .eq('user_id', auth.user.id)
+      .not('batch_id', 'is', null);
+
+    if (error) throw error;
+
+    return (data ?? []).map((row) => row.batch_id as number);
+  }
+
   /** Sirf Published aur tayyar lectures, sirf student ke apne batches ki. */
   async getForMyBatches(): Promise<Lecture[]> {
-    const batchIds = await this.liveClassService.getMyBatchIds();
+    const batchIds = await this.getMyBatchIds();
 
     if (batchIds.length === 0) return [];
 
@@ -164,11 +180,11 @@ export class LectureService {
     const name = file.name.toLowerCase();
 
     if (!VIDEO_EXTENSIONS.some((ext) => name.endsWith(ext))) {
-      throw new Error('Sirf mp4, m4v, mov, mkv, webm ya avi video chalegi.');
+      throw new Error('Unsupported file type. Please choose an MP4, M4V, MOV, MKV, WEBM or AVI video.');
     }
 
     if (file.size === 0) {
-      throw new Error('Ye file khali hai.');
+      throw new Error('The selected file is empty.');
     }
   }
 
@@ -200,7 +216,7 @@ export class LectureService {
     while (offset < file.size) {
       offset = await this.sendChunk(lectureId, file, offset, signal);
 
-      if (offset > file.size) throw new Error('Server ne galat size bataya. Dobara upload karein.');
+      if (offset > file.size) throw new Error('The server reported an unexpected size. Please upload the file again.');
 
       onProgress({ sent: offset, total: file.size });
     }
@@ -242,7 +258,7 @@ export class LectureService {
           return body['received'];
         }
 
-        const message = (body['error'] as string) || `Upload fail (${response.status}).`;
+        const message = (body['error'] as string) || `Upload failed (${response.status}).`;
 
         if (response.status < 500) throw new UploadRejected(message);
 
@@ -265,7 +281,7 @@ export class LectureService {
     // Har baar naya token (lambi upload mein purana expire ho sakta hai, Supabase khud refresh karta hai)
     const { data, error } = await this.supabase.auth.getSession();
 
-    if (error || !data.session) throw new Error('Dobara login karein.');
+    if (error || !data.session) throw new Error('Your session has expired. Please sign in again.');
 
     return { Authorization: `Bearer ${data.session.access_token}` };
   }
@@ -284,7 +300,7 @@ export class LectureService {
 
     if (!response.ok) {
       const body = await response.json().catch(() => ({}) as Record<string, unknown>);
-      throw new Error((body['error'] as string) || `Video server ka masla (${response.status}).`);
+      throw new Error((body['error'] as string) || `The video server returned an error (${response.status}).`);
     }
 
     if (response.status === 204) return undefined as T;
@@ -294,10 +310,10 @@ export class LectureService {
 
   private friendly(error: unknown): Error {
     if (error instanceof TypeError) {
-      return new Error('Video server se rabta nahi ho saka. Kya server chal raha hai?');
+      return new Error('Unable to reach the video server. Please make sure it is running and try again.');
     }
 
-    return error instanceof Error ? error : new Error('Kuch ghalat ho gaya.');
+    return error instanceof Error ? error : new Error('Something went wrong. Please try again.');
   }
 
   private validate(input: LectureInput): void {

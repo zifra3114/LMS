@@ -66,7 +66,7 @@ export function createAuth({ db, config }) {
   return {
     async requireUser(req, res, next) {
       const user = await resolveUser(req);
-      if (!user) return res.status(401).json({ error: 'Dobara login karein.' });
+      if (!user) return res.status(401).json({ error: 'Please sign in again.' });
 
       req.user = user;
       next();
@@ -74,9 +74,9 @@ export function createAuth({ db, config }) {
 
     async requireAdmin(req, res, next) {
       const user = await resolveUser(req);
-      if (!user) return res.status(401).json({ error: 'Dobara login karein.' });
+      if (!user) return res.status(401).json({ error: 'Please sign in again.' });
       if (!user.isAdmin) {
-        return res.status(403).json({ error: 'Sirf admin ye kaam kar sakta hai.' });
+        return res.status(403).json({ error: 'Only administrators can perform this action.' });
       }
 
       req.user = user;

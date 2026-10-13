@@ -1,12 +1,14 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { FunctionsFetchError, FunctionsHttpError } from '@supabase/supabase-js';
+import {
+  FunctionsFetchError,
+  FunctionsHttpError,
+} from '@supabase/supabase-js';
 import { SupabaseService } from '../../core/services/supabase.service';
+import { Toast } from '../../core/services/toast.service';
 
 type DbRow = Record<string, unknown>;
-type NoticeType = 'success' | 'error' | 'warning';
-
 interface CatalogItem {
   id: string;
   name: string;
@@ -18,439 +20,444 @@ interface CatalogItem {
   standalone: true,
   imports: [FormsModule, RouterLink],
   template: `
-    <main class="min-h-screen bg-[#f8fafc] text-slate-800">
-
-      <!-- Header / Top Navbar -->
-      <header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
-        <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-8">
-          <a routerLink="/" class="flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-200">
-              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <main class="register-page">
+      <header class="topbar">
+        <div class="topbar-inner">
+          <a routerLink="/" class="brand">
+            <span class="brand-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m2.5 8.5 9.5-5 9.5 5-9.5 5-9.5-5Z"/>
-                <path d="M6.5 11v5c3.3 2.6 7.7 2.6 11 0v-5"/>
-                <path d="M21.5 9v6"/>
+                <path d="M6.5 11v5c3.3 2.6 7.7 2.6 11 0v-5"/><path d="M21.5 9v6"/>
               </svg>
-            </div>
-            <div>
-              <span class="block text-lg font-black tracking-tight text-slate-900">EduCore</span>
-              <span class="block text-[10px] font-bold uppercase tracking-wider text-blue-600">
-                Student Admission Portal
-              </span>
-            </div>
+            </span>
+            <span class="brand-copy"><strong>EduCore</strong><small>STUDENT ADMISSION PORTAL</small></span>
           </a>
-
-          <a routerLink="/"
-            class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m15 18-6-6 6-6"/>
-              <path d="M9 12h12"/>
-            </svg>
+          <a routerLink="/" class="home-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/><path d="M9 12h12"/></svg>
             Back to Home
           </a>
         </div>
       </header>
 
-      <!-- Main Layout Container (Balanced 3-Column Layout) -->
-      <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div class="grid gap-8 lg:grid-cols-12 items-start">
-
-          <!-- Left Info Widgets -->
-          <div class="hidden lg:col-span-3 lg:block space-y-5 sticky top-24">
-            <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-              <div class="flex items-center gap-2.5 text-blue-600 font-bold text-xs uppercase tracking-wider">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                </svg>
-                Registration Steps
-              </div>
-              <ul class="mt-4 space-y-4 text-xs font-medium text-slate-600">
-                <li class="flex items-start gap-3">
-                  <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 font-bold text-[11px]">1</span>
-                  <span>Fill personal contact & address details</span>
-                </li>
-                <li class="flex items-start gap-3">
-                  <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 font-bold text-[11px]">2</span>
-                  <span>Add education qualification & guardian info</span>
-                </li>
-                <li class="flex items-start gap-3">
-                  <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600 font-bold text-[11px]">3</span>
-                  <span>Select preferred course and active batch</span>
-                </li>
-              </ul>
-            </div>
-
-            <div class="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-blue-600 to-indigo-700 p-5 text-white shadow-md">
-              <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-200">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12 12 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.516 0c.85.493 1.508 1.333 1.508 2.316V18" />
-                </svg>
-                Need Assistance?
-              </div>
-              <p class="mt-2 text-xs text-blue-100 leading-relaxed">
-                If you face issues with batch selection or CNIC verification, contact our support helpline.
-              </p>
-            </div>
+      <section class="workspace">
+        <div class="ambient ambient-one"></div>
+        <div class="ambient ambient-two"></div>
+        <div class="workspace-inner">
+          <div class="page-heading">
+            <span class="admission-badge"><i></i> ADMISSIONS ARE OPEN</span>
+            <h1>Start Your <span>Journey</span></h1>
+            <p>Complete your registration details to begin your learning journey with EduCore.</p>
           </div>
 
-          <!-- Center Registration Form Panel -->
-          <div class="lg:col-span-6 w-full">
-            <div class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-100">
-
-              <div class="border-b border-slate-100 bg-slate-50/50 px-6 py-6 sm:px-8">
-                <div class="flex items-center justify-between">
-                  <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 border border-blue-100">
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
-                    </svg>
-                    New Admission
-                  </span>
-                  <span class="text-xs text-slate-400 font-medium">* Required fields</span>
+          <div class="layout-grid">
+            <aside class="side-column left-column">
+              <section class="guide-card">
+                <span class="mini-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+                </span>
+                <h2>Registration Guide</h2>
+                <p class="muted-on-dark">Follow these steps to submit your admission request.</p>
+                <div class="guide-steps">
+                  <div class="guide-step"><b class="step-number active">01</b><div><strong>Personal details</strong><small>Contact information and address.</small></div></div>
+                  <div class="guide-step"><b class="step-number">02</b><div><strong>Education &amp; guardian</strong><small>Qualification and guardian information.</small></div></div>
+                  <div class="guide-step"><b class="step-number">03</b><div><strong>Course &amp; batch</strong><small>Choose your preferred course and batch.</small></div></div>
                 </div>
-                <h1 class="mt-3 text-2xl font-black text-slate-900 sm:text-3xl">
-                  Student Registration
-                </h1>
-                <p class="mt-1 text-xs text-slate-500">
-                  Please fill in your details carefully to complete your enrollment.
-                </p>
+              </section>
+              <section class="info-card assistance-card">
+                <div class="info-title"><span class="info-icon blue-icon">ⓘ</span><div><h3>Need assistance?</h3><p>We're here to help.</p></div></div>
+                <p>If you experience issues with course or batch selection, contact your admission support team.</p>
+              </section>
+            </aside>
+
+            <section class="form-card">
+              <div class="form-card-header">
+                <div class="header-decoration"></div>
+                <span class="new-admission"><i></i> NEW ADMISSION</span>
+                <h2>Student Registration</h2>
+                <p>Enter accurate information in all required fields.</p>
+                <span class="header-user-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 8v6m3-3h-6"/></svg>
+                </span>
               </div>
 
-              <form #registrationForm="ngForm"
-                (ngSubmit)="registerStudent()"
-                class="space-y-6 p-6 sm:p-8">
-
-                <!-- Personal Information -->
-                <div class="space-y-4">
-                  <div class="flex items-center gap-2 border-b border-slate-100 pb-2">
-                    <svg class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                    </svg>
-                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                      1. Personal Details
-                    </h3>
+              <form #registrationForm="ngForm" (ngSubmit)="registerStudent()" class="registration-form">
+                <section class="form-section">
+                  <div class="section-heading"><b>01</b><div><h3>Personal Information</h3><p>Your basic contact details</p></div></div>
+                  <div class="field"><label for="student-name">Full Name <em>*</em></label><input id="student-name" name="fullName" [(ngModel)]="fullName" required maxlength="120" autocomplete="name" placeholder="Enter your full name" class="form-input"/></div>
+                  <div class="field"><label for="student-email">Email Address <em>*</em></label><input id="student-email" type="email" name="email" [(ngModel)]="email" required email autocomplete="email" placeholder="you@example.com" class="form-input"/></div>
+                  <div class="field-grid">
+                    <div class="field"><label for="student-phone">Phone Number <em>*</em></label><input id="student-phone" type="tel" name="studentPhone" [ngModel]="studentPhone" (ngModelChange)="setDigits('studentPhone', $event, 11)" required pattern="[0-9]{11}" minlength="11" maxlength="11" inputmode="numeric" placeholder="03001234567" class="form-input"/></div>
+                    <div class="field"><label for="student-cnic">CNIC / B-Form <em>*</em></label><input id="student-cnic" name="studentCnic" [ngModel]="studentCnic" (ngModelChange)="setDigits('studentCnic', $event, 13)" required pattern="[0-9]{13}" minlength="13" maxlength="13" inputmode="numeric" placeholder="4210112345671" class="form-input"/></div>
                   </div>
+                  <div class="field"><label for="student-address">Residential Address <em>*</em></label><textarea id="student-address" name="address" [(ngModel)]="address" required maxlength="500" rows="3" placeholder="House number, street, area, city" class="form-input textarea"></textarea></div>
+                </section>
 
-                  <!-- Full Name -->
-                  <div>
-                    <label for="student-name" class="mb-1.5 block text-xs font-semibold text-slate-700">
-                      Full Name <span class="text-rose-500">*</span>
-                    </label>
-                    <input id="student-name" name="fullName"
-                      [(ngModel)]="fullName" required maxlength="120"
-                      autocomplete="name" placeholder="e.g. Zifra Firdous"
-                      class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"/>
+                <section class="form-section">
+                  <div class="section-heading"><b>02</b><div><h3>Education &amp; Equipment</h3><p>Your current qualification</p></div></div>
+                  <div class="field-grid">
+                    <div class="field"><label for="last-education">Qualification <em>*</em></label><input id="last-education" name="lastEducation" [(ngModel)]="lastEducation" required maxlength="150" placeholder="Matric / Intermediate" class="form-input"/></div>
+                    <div class="field"><label for="laptop-availability">Laptop Availability <em>*</em></label><select id="laptop-availability" name="laptopAvailable" [(ngModel)]="laptopAvailable" required class="form-input"><option value="">Select option</option><option value="yes">Yes, I have a laptop</option><option value="no">No laptop available</option></select></div>
                   </div>
+                </section>
 
-                  <!-- Email -->
-                  <div>
-                    <label for="student-email" class="mb-1.5 block text-xs font-semibold text-slate-700">
-                      Email Address <span class="text-rose-500">*</span>
-                    </label>
-                    <input id="student-email" type="email" name="email"
-                      [(ngModel)]="email" required email autocomplete="email"
-                      placeholder="you@example.com"
-                      class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"/>
+                <section class="form-section">
+                  <div class="section-heading"><b>03</b><div><h3>Guardian Information</h3><p>Parent or guardian contact details</p></div></div>
+                  <div class="field"><label for="father-name">Father / Guardian Name <em>*</em></label><input id="father-name" name="fatherName" [(ngModel)]="fatherName" required maxlength="120" placeholder="Enter guardian's full name" class="form-input"/></div>
+                  <div class="field-grid">
+                    <div class="field"><label for="father-phone">Guardian Phone <em>*</em></label><input id="father-phone" type="tel" name="fatherPhone" [ngModel]="fatherPhone" (ngModelChange)="setDigits('fatherPhone', $event, 11)" required pattern="[0-9]{11}" minlength="11" maxlength="11" inputmode="numeric" placeholder="03001234567" class="form-input"/></div>
+                    <div class="field"><label for="father-cnic">Guardian CNIC <span class="optional">(Optional)</span></label><input id="father-cnic" name="fatherCnic" [ngModel]="fatherCnic" (ngModelChange)="setDigits('fatherCnic', $event, 13)" pattern="[0-9]{13}" maxlength="13" inputmode="numeric" placeholder="4210112345671" class="form-input"/></div>
                   </div>
+                </section>
 
-                  <!-- Phone & CNIC -->
-                  <div class="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label for="student-phone" class="mb-1.5 block text-xs font-semibold text-slate-700">
-                        Phone Number <span class="text-rose-500">*</span>
-                      </label>
-                      <input id="student-phone" type="tel" name="studentPhone"
-                        [(ngModel)]="studentPhone" required
-                        pattern="[+]?[0-9 ()-]{10,20}" maxlength="20"
-                        placeholder="+92 300 1234567"
-                        class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"/>
-                    </div>
-
-                    <div>
-                      <label for="student-cnic" class="mb-1.5 block text-xs font-semibold text-slate-700">
-                        CNIC / B-Form <span class="text-rose-500">*</span>
-                      </label>
-                      <input id="student-cnic" type="text" name="studentCnic"
-                        [(ngModel)]="studentCnic" required
-                        pattern="[0-9]{5}-?[0-9]{7}-?[0-9]" maxlength="15"
-                        placeholder="42101-1234567-1"
-                        class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"/>
-                    </div>
-                  </div>
-
-                  <!-- Address -->
-                  <div>
-                    <label for="student-address" class="mb-1.5 block text-xs font-semibold text-slate-700">
-                      Residential Address <span class="text-rose-500">*</span>
-                    </label>
-                    <textarea id="student-address" name="address"
-                      [(ngModel)]="address" required maxlength="500" rows="3"
-                      placeholder="House no, street, area, city"
-                      class="w-full resize-y rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"></textarea>
-                  </div>
-                </div>
-
-                <!-- Education Information -->
-                <div class="space-y-4 pt-2">
-                  <div class="flex items-center gap-2 border-b border-slate-100 pb-2">
-                    <svg class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" />
-                    </svg>
-                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                      2. Education & Equipment
-                    </h3>
-                  </div>
-
-                  <div class="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label for="last-education" class="mb-1.5 block text-xs font-semibold text-slate-700">
-                        Qualification <span class="text-rose-500">*</span>
-                      </label>
-                      <input id="last-education" name="lastEducation"
-                        [(ngModel)]="lastEducation" required maxlength="150"
-                        placeholder="e.g. Matric / Intermediate"
-                        class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"/>
-                    </div>
-
-                    <div>
-                      <label for="laptop-availability" class="mb-1.5 block text-xs font-semibold text-slate-700">
-                        Have Laptop? <span class="text-rose-500">*</span>
-                      </label>
-                      <select id="laptop-availability" name="laptopAvailable"
-                        [(ngModel)]="laptopAvailable" required
-                        class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm font-medium text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100">
-                        <option value="">Select option</option>
-                        <option value="yes">Yes, I have a laptop</option>
-                        <option value="no">No laptop available</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Father / Guardian Information -->
-                <div class="space-y-4 pt-2">
-                  <div class="flex items-center gap-2 border-b border-slate-100 pb-2">
-                    <svg class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a5.97 5.97 0 0 0-.942 3.197" />
-                    </svg>
-                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                      3. Guardian Information
-                    </h3>
-                  </div>
-
-                  <div>
-                    <label for="father-name" class="mb-1.5 block text-xs font-semibold text-slate-700">
-                      Father / Guardian Name <span class="text-rose-500">*</span>
-                    </label>
-                    <input id="father-name" name="fatherName"
-                      [(ngModel)]="fatherName" required maxlength="120"
-                      placeholder="Father or Guardian Name"
-                      class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"/>
-                  </div>
-
-                  <div class="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label for="father-phone" class="mb-1.5 block text-xs font-semibold text-slate-700">
-                        Guardian Phone <span class="text-rose-500">*</span>
-                      </label>
-                      <input id="father-phone" type="tel" name="fatherPhone"
-                        [(ngModel)]="fatherPhone" required
-                        pattern="[+]?[0-9 ()-]{10,20}" maxlength="20"
-                        placeholder="+92 300 1234567"
-                        class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"/>
-                    </div>
-
-                    <div>
-                      <label for="father-cnic" class="mb-1.5 block text-xs font-semibold text-slate-700">
-                        Guardian CNIC <span class="font-normal text-slate-400">(Optional)</span>
-                      </label>
-                      <input id="father-cnic" type="text" name="fatherCnic"
-                        [(ngModel)]="fatherCnic"
-                        pattern="[0-9]{5}-?[0-9]{7}-?[0-9]" maxlength="15"
-                        placeholder="42101-1234567-1"
-                        class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100"/>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Course & Batch Selection -->
-                <div class="space-y-4 pt-2">
-                  <div class="flex items-center gap-2 border-b border-slate-100 pb-2">
-                    <svg class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18c-2.305 0-4.408.867-6 2.292m0-14.25v14.25" />
-                    </svg>
-                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                      4. Course & Batch Selection
-                    </h3>
-                  </div>
-
+                <section class="form-section">
+                  <div class="section-heading"><b>04</b><div><h3>Course &amp; Batch Selection</h3><p>Choose the course you want to join</p></div></div>
                   @if (catalogLoading()) {
-                    <div class="flex items-center gap-2.5 rounded-xl border border-blue-100 bg-blue-50 p-3 text-xs text-blue-800 font-medium">
-                      <div class="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                      Fetching available courses and batches...
-                    </div>
+                    <div class="loading-note"><span class="spinner"></span>Loading available courses and batches...</div>
                   }
-
-                  <div class="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label for="student-course" class="mb-1.5 block text-xs font-semibold text-slate-700">
-                        Course <span class="text-rose-500">*</span>
-                      </label>
-                      <select id="student-course" name="courseId"
-                        [(ngModel)]="selectedCourse"
-                        (ngModelChange)="onCourseChange()"
-                        required [disabled]="catalogLoading() || courses().length === 0"
-                        class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm font-medium text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 disabled:opacity-50">
-                        <option value="">Select Course</option>
-                        @for (course of courses(); track course.id) {
-                          <option [value]="course.id">{{ course.name }}</option>
-                        }
+                  <div class="field-grid">
+                    <div class="field">
+                      <label for="student-course">Select Course <em>*</em></label>
+                      <select id="student-course" name="courseId" [(ngModel)]="selectedCourse" (ngModelChange)="onCourseChange()" required [disabled]="catalogLoading() || courses().length === 0" class="form-input">
+                        <option value="">Choose a course</option>
+                        @for (course of courses(); track course.id) { <option [value]="course.id">{{ course.name }}</option> }
                       </select>
+                      @if (!catalogLoading() && courses().length === 0) { <p class="field-hint error-hint">No courses are currently available.</p> }
                     </div>
-
-                    <div>
-                      <label for="student-batch" class="mb-1.5 block text-xs font-semibold text-slate-700">
-                        Batch <span class="text-rose-500">*</span>
-                      </label>
-                      <select id="student-batch" name="batchId"
-                        [(ngModel)]="selectedBatch" required
-                        [disabled]="!selectedCourse || catalogLoading() || availableBatches.length === 0"
-                        class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-sm font-medium text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 disabled:opacity-50">
-                        <option value="">Select Batch</option>
-                        @for (batch of availableBatches; track batch.id) {
-                          <option [value]="batch.id">{{ batch.name }}</option>
-                        }
+                    <div class="field">
+                      <label for="student-batch">Select Batch <em>*</em></label>
+                      <select id="student-batch" name="batchId" [(ngModel)]="selectedBatch" required [disabled]="!selectedCourse || catalogLoading() || availableBatches.length === 0" class="form-input">
+                        <option value="">Choose a batch</option>
+                        @for (batch of availableBatches; track batch.id) { <option [value]="batch.id">{{ batch.name }}</option> }
                       </select>
+                      @if (selectedCourse && !catalogLoading() && availableBatches.length === 0) { <p class="field-hint warning-hint">No batches available for this course.</p> }
                     </div>
                   </div>
+                </section>
+
+                <div class="privacy-note">
+                  <span class="privacy-lock">▣</span>
+                  <div><strong>Your information matters</strong><p>Please ensure your information is correct before submitting. Your CNIC and contact details will be sent to the registration service.</p></div>
                 </div>
 
-                <!-- Status Notice -->
-                @if (notice()) {
-                  <div role="status"
-                    class="rounded-xl border p-3.5 text-xs font-semibold leading-relaxed"
-                    [class.border-emerald-200]="noticeType() === 'success'"
-                    [class.bg-emerald-50]="noticeType() === 'success'"
-                    [class.text-emerald-800]="noticeType() === 'success'"
-                    [class.border-rose-200]="noticeType() === 'error'"
-                    [class.bg-rose-50]="noticeType() === 'error'"
-                    [class.text-rose-800]="noticeType() === 'error'"
-                    [class.border-amber-200]="noticeType() === 'warning'"
-                    [class.bg-amber-50]="noticeType() === 'warning'"
-                    [class.text-amber-800]="noticeType() === 'warning'">
-                    {{ notice() }}
-                  </div>
-                }
-
-                <!-- Submit Button -->
-                <button type="submit"
-                  [disabled]="registrationForm.invalid || saving() || registered() || catalogLoading()"
-                  class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white shadow-md shadow-blue-200 transition hover:bg-blue-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50">
-
-                  @if (saving()) {
-                    <div class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                    Submitting Application...
-                  } @else if (registered()) {
-                    Application Submitted
-                  } @else {
-                    Submit Registration
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M5 12h14m-6-6 6 6-6 6"/>
-                    </svg>
-                  }
+                <button type="submit" [disabled]="registrationForm.invalid || saving() || registered() || catalogLoading()" class="submit-button">
+                  @if (saving()) { <span class="spinner button-spinner"></span> Submitting Application... }
+                  @else if (registered()) { Registration Submitted }
+                  @else { Submit Registration <span aria-hidden="true">→</span> }
                 </button>
-
-                <div class="border-t border-slate-100 pt-4 text-center">
-                  <p class="text-xs text-slate-500 font-medium">
-                    Already registered with us?
-                    <a routerLink="/student/login"
-                      class="font-bold text-blue-600 hover:text-blue-800 hover:underline">
-                      Student Login
-                    </a>
-                  </p>
-                </div>
+                <p class="login-prompt">Already registered? <a routerLink="/student-login">Student Login</a></p>
               </form>
-            </div>
+            </section>
+
+            <aside class="side-column right-column">
+              <section class="info-card">
+                <span class="info-icon green-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg>
+                </span>
+                <h3>Secure Registration</h3>
+                <p>Submit your information carefully. Access to personal records should be controlled by your registration service and database policies.</p>
+              </section>
+              <section class="info-card checklist-card">
+                <h4>BEFORE YOU SUBMIT</h4>
+                <ul><li>Check your email and phone number.</li><li>Enter the correct CNIC or B-Form.</li><li>Confirm your selected course and batch.</li></ul>
+              </section>
+            </aside>
           </div>
 
-          <!-- Right Security/Info Panel -->
-          <div class="hidden lg:col-span-3 lg:block space-y-5 sticky top-24">
-            <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-              <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-800">
-                <svg class="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75s-2.25 2.25-3.75 3.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
-                </svg>
-                Data Privacy
-              </div>
-              <p class="mt-2 text-xs text-slate-500 leading-relaxed">
-                Your personal and CNIC details are encrypted and strictly kept confidential under EduCore privacy rules.
-              </p>
-            </div>
-          </div>
-
+          <footer class="page-footer">EDUCORE · STUDENT ADMISSION PORTAL</footer>
         </div>
-      </div>
+      </section>
     </main>
   `,
+  styles: [`
+    :host {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      color: #0f172a;
+    }
+
+    * { box-sizing: border-box; }
+
+    .register-page {
+      width: 100%;
+      min-height: 100dvh;
+      background: #f7f9fc;
+    }
+
+    .topbar {
+      position: relative;
+      z-index: 10;
+      height: 76px;
+      background: rgba(255,255,255,.97);
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .topbar-inner {
+      width: min(100% - 40px, 1280px);
+      height: 100%;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; min-width: 0; }
+    .brand-icon {
+      display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 auto;
+      border-radius: 14px; background: #020617; color: white;
+      box-shadow: 0 5px 14px #cbd5e1;
+    }
+    .brand-icon svg { width: 22px; height: 22px; }
+    .brand-copy { display: flex; flex-direction: column; gap: 3px; }
+    .brand-copy strong { font-size: 19px; line-height: 1; font-weight: 900; letter-spacing: -.04em; color: #020617; }
+    .brand-copy small { font-size: 8px; font-weight: 800; letter-spacing: .19em; color: #1d4ed8; white-space: nowrap; }
+    .home-link {
+      display: inline-flex; align-items: center; gap: 7px; padding: 10px 14px;
+      border: 1px solid #dbe3ee; border-radius: 11px; color: #334155;
+      text-decoration: none; font-size: 11px; font-weight: 800; white-space: nowrap;
+      transition: .2s ease;
+    }
+    .home-link:hover { color: white; background: #020617; border-color: #020617; }
+    .home-link svg { width: 15px; height: 15px; }
+
+    .workspace { position: relative; isolation: isolate; background: #f7f9fc; overflow: hidden; }
+    .ambient { position: absolute; z-index: -1; pointer-events: none; width: 340px; height: 340px; border-radius: 50%; filter: blur(70px); opacity: .6; }
+    .ambient-one { top: -120px; right: -100px; background: #dbeafe; }
+    .ambient-two { bottom: -120px; left: -100px; background: #e0e7ff; }
+    .workspace-inner { position: relative; width: min(100% - 40px, 1280px); margin: 0 auto; padding: 30px 0 18px; }
+
+    .page-heading { text-align: center; margin: 0 auto 27px; }
+    .admission-badge {
+      display: inline-flex; align-items: center; gap: 8px; padding: 8px 13px;
+      border: 1px solid #bfdbfe; border-radius: 999px; background: white; color: #1d4ed8;
+      box-shadow: 0 2px 5px #e2e8f0; font-size: 9px; font-weight: 900; letter-spacing: .19em;
+    }
+    .admission-badge i, .new-admission i { width: 6px; height: 6px; border-radius: 50%; background: #2563eb; }
+    .page-heading h1 { margin: 15px 0 7px; font-size: clamp(30px, 3vw, 43px); line-height: 1.12; letter-spacing: -.055em; font-weight: 950; color: #020617; }
+    .page-heading h1 span { color: #1d4ed8; }
+    .page-heading > p { margin: 0; color: #64748b; font-size: 13px; line-height: 1.7; }
+
+    .layout-grid {
+      display: grid;
+      grid-template-columns: minmax(0, .88fr) minmax(0, 1.8fr) minmax(0, .88fr);
+      gap: 22px;
+      align-items: start;
+    }
+    .side-column { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .guide-card { padding: 22px; border-radius: 17px; background: #020617; color: white; box-shadow: 0 12px 28px rgb(15 23 42 / 10%); }
+    .mini-icon { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid #ffffff20; border-radius: 12px; background: #ffffff12; color: #93c5fd; }
+    .mini-icon svg { width: 19px; height: 19px; }
+    .guide-card h2 { margin: 16px 0 5px; font-size: 15px; font-weight: 900; letter-spacing: -.02em; }
+    .guide-card > p { margin: 0; font-size: 11px; line-height: 1.7; }
+    .muted-on-dark { color: #94a3b8; }
+    .guide-steps { display: flex; flex-direction: column; gap: 17px; margin-top: 21px; }
+    .guide-step { display: flex; align-items: flex-start; gap: 10px; }
+    .step-number { display: grid; place-items: center; width: 28px; height: 28px; flex: 0 0 28px; border-radius: 10px; background: #ffffff12; color: #93c5fd; font-size: 10px; }
+    .step-number.active { color: white; background: #2563eb; }
+    .guide-step strong { display: block; padding-top: 2px; font-size: 11px; line-height: 1.4; }
+    .guide-step small { display: block; margin-top: 4px; color: #94a3b8; font-size: 10px; line-height: 1.5; }
+
+    .info-card { padding: 18px; border: 1px solid #e2e8f0; border-radius: 16px; background: white; box-shadow: 0 2px 3px rgb(15 23 42 / 5%); min-width: 0; }
+    .info-title { display: flex; align-items: center; gap: 10px; }
+    .info-icon { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; flex: 0 0 auto; }
+    .info-icon svg { width: 21px; height: 21px; }
+    .blue-icon { background: #eff6ff; color: #2563eb; font-size: 22px; font-weight: 700; }
+    .green-icon { background: #ecfdf5; color: #059669; }
+    .info-card h3 { margin: 0; color: #0f172a; font-size: 12px; font-weight: 900; }
+    .info-title p { margin: 4px 0 0; color: #94a3b8; font-size: 10px; }
+    .info-card > p { margin: 12px 0 0; color: #64748b; font-size: 10.5px; line-height: 1.75; }
+    .info-card > .green-icon { margin-bottom: 12px; }
+    .checklist-card h4 { margin: 0; color: #1d4ed8; font-size: 9px; font-weight: 900; letter-spacing: .17em; }
+    .checklist-card ul { display: grid; gap: 11px; margin: 14px 0 0; padding: 0; list-style: none; }
+    .checklist-card li { position: relative; padding-left: 17px; color: #64748b; font-size: 10.5px; line-height: 1.55; }
+    .checklist-card li::before { content: '✓'; position: absolute; left: 0; top: 0; color: #2563eb; font-weight: 900; }
+
+    .form-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid #e2e8f0; border-radius: 21px; background: white; box-shadow: 0 12px 32px rgb(15 23 42 / 8%); }
+    .form-card-header { position: relative; isolation: isolate; flex: 0 0 auto; overflow: hidden; padding: 22px 26px 23px; background: #020617; color: white; }
+    .header-decoration { position: absolute; z-index: -1; width: 150px; height: 150px; top: -80px; right: -5px; border: 25px solid rgb(37 99 235 / 14%); border-radius: 50%; }
+    .new-admission { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border: 1px solid rgb(96 165 250 / 20%); border-radius: 7px; background: rgb(37 99 235 / 10%); color: #bfdbfe; font-size: 8px; font-weight: 900; letter-spacing: .17em; }
+    .new-admission i { width: 5px; height: 5px; background: #60a5fa; }
+    .form-card-header h2 { margin: 13px 0 5px; font-size: clamp(21px, 2vw, 27px); line-height: 1.2; font-weight: 950; letter-spacing: -.04em; }
+    .form-card-header > p { margin: 0; color: #94a3b8; font-size: 10.5px; line-height: 1.7; }
+    .header-user-icon { position: absolute; top: 23px; right: 25px; display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #ffffff1a; border-radius: 13px; background: #ffffff0b; color: #93c5fd; }
+    .header-user-icon svg { width: 24px; height: 24px; }
+
+    .registration-form { display: flex; flex-direction: column; gap: 27px; min-width: 0; padding: 25px 26px 28px; }
+    .form-section { display: flex; flex-direction: column; gap: 17px; min-width: 0; }
+    .section-heading { display: flex; align-items: center; gap: 11px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; }
+    .section-heading > b { display: grid; place-items: center; width: 31px; height: 31px; flex: 0 0 31px; border-radius: 10px; background: #020617; color: white; font-size: 11px; }
+    .section-heading h3 { margin: 0; color: #020617; font-size: 12px; font-weight: 900; }
+    .section-heading p { margin: 4px 0 0; color: #94a3b8; font-size: 10px; }
+    .field { min-width: 0; }
+    .field label { display: block; margin-bottom: 7px; color: #334155; font-size: 10.5px; font-weight: 800; }
+    .field label em { color: #2563eb; font-style: normal; }
+    .optional { color: #94a3b8; font-weight: 500; }
+    .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; min-width: 0; }
+    .form-input { display: block; width: 100%; min-width: 0; min-height: 42px; border: 1px solid #e2e8f0; border-radius: 11px; background: #f8fafc; padding: 0 12px; color: #0f172a; font-family: inherit; font-size: 11px; font-weight: 500; line-height: 1.5; outline: none; transition: border-color .18s ease, background .18s ease, box-shadow .18s ease; }
+    .form-input::placeholder { color: #94a3b8; font-weight: 400; }
+    .form-input:hover { border-color: #cbd5e1; }
+    .form-input:focus { border-color: #2563eb; background: white; box-shadow: 0 0 0 3px rgb(37 99 235 / 10%); }
+    .form-input:disabled { cursor: not-allowed; opacity: .55; }
+    select.form-input { cursor: pointer; }
+    .textarea { min-height: 84px; padding: 10px 12px; resize: vertical; }
+    .field-hint { margin: 7px 0 0; font-size: 10px; }
+    .error-hint { color: #e11d48; }
+    .warning-hint { color: #d97706; }
+    .loading-note { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid #dbeafe; border-radius: 11px; background: #eff6ff; color: #1d4ed8; font-size: 10px; font-weight: 700; }
+    .spinner { display: inline-block; width: 17px; height: 17px; flex: 0 0 auto; border: 2px solid #2563eb; border-top-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+    .button-spinner { border-color: white; border-top-color: transparent; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .privacy-note { display: flex; align-items: flex-start; gap: 10px; padding: 13px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; }
+    .privacy-lock { color: #1d4ed8; font-size: 18px; line-height: 1.2; }
+    .privacy-note strong { display: block; color: #334155; font-size: 10.5px; font-weight: 900; }
+    .privacy-note p { margin: 5px 0 0; color: #64748b; font-size: 10px; line-height: 1.65; }
+    .submit-button { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 48px; padding: 12px 18px; border: 0; border-radius: 11px; background: #1d4ed8; color: white; font-size: 12px; font-weight: 900; cursor: pointer; box-shadow: 0 8px 18px rgb(37 99 235 / 18%); transition: background .2s ease, transform .2s ease; }
+    .submit-button:hover:not(:disabled) { background: #020617; }
+    .submit-button:hover:not(:disabled) span:last-child { transform: translateX(3px); }
+    .submit-button:active:not(:disabled) { transform: scale(.99); }
+    .submit-button:disabled { cursor: not-allowed; opacity: .5; box-shadow: none; }
+    .submit-button span:last-child { font-size: 17px; transition: transform .2s ease; }
+    .login-prompt { margin: -12px 0 0; text-align: center; color: #64748b; font-size: 10.5px; }
+    .login-prompt a { color: #1d4ed8; font-weight: 900; text-decoration: none; cursor: pointer; }
+    .login-prompt a:hover { color: #020617; text-decoration: underline; }
+    .page-footer { padding-top: 17px; text-align: center; color: #94a3b8; font-size: 9px; font-weight: 700; letter-spacing: .13em; }
+
+    button:focus-visible, a:focus-visible { outline: 3px solid rgb(37 99 235 / 35%); outline-offset: 3px; }
+
+    @media (min-width: 1440px) {
+      .workspace-inner { width: min(100% - 64px, 1400px); }
+      .layout-grid { gap: 26px; }
+      .guide-card { padding: 25px; }
+      .info-card { padding: 21px; }
+      .registration-form { padding: 30px 32px; }
+      .form-input { min-height: 46px; font-size: 12px; }
+      .field label { font-size: 11px; }
+    }
+
+    /* Tablet and mobile: single column. Page scrolls naturally (no inner form scroll anywhere). */
+    @media (max-width: 1023px) {
+      .topbar { position: sticky; top: 0; }
+      .workspace-inner { width: min(100% - 40px, 760px); padding: 28px 0 20px; }
+      .page-heading { margin-bottom: 25px; }
+      .layout-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+      .registration-form { padding: 25px; }
+      .left-column { order: 2; }
+      .form-card { order: 1; }
+      .right-column { order: 3; }
+    }
+
+    @media (min-width: 640px) and (max-width: 1023px) {
+      .left-column { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: stretch; }
+      .right-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+    }
+
+    @media (max-width: 639px) {
+      .topbar { height: 68px; }
+      .topbar-inner { width: calc(100% - 28px); gap: 8px; }
+      .brand { gap: 9px; }
+      .brand-icon { width: 38px; height: 38px; border-radius: 12px; }
+      .brand-copy strong { font-size: 17px; }
+      .brand-copy small { font-size: 7px; letter-spacing: .11em; }
+      .home-link { gap: 4px; padding: 9px 9px; font-size: 10px; }
+      .workspace-inner { width: calc(100% - 28px); padding-top: 23px; }
+      .page-heading { margin-bottom: 22px; }
+      .page-heading h1 { font-size: clamp(28px, 8vw, 36px); }
+      .page-heading > p { font-size: 12px; }
+      .admission-badge { font-size: 8px; letter-spacing: .14em; }
+      .form-card { border-radius: 17px; }
+      .form-card-header { padding: 20px 17px; }
+      .form-card-header h2 { font-size: 22px; }
+      .form-card-header > p { max-width: 85%; }
+      .header-user-icon { top: 19px; right: 15px; width: 36px; height: 36px; }
+      .header-user-icon svg { width: 20px; height: 20px; }
+      .registration-form { padding: 20px 16px 22px; gap: 25px; }
+      .form-section { gap: 15px; }
+      .field-grid { grid-template-columns: minmax(0, 1fr); gap: 15px; }
+      .form-input { min-height: 46px; font-size: 13px; }
+      .textarea { min-height: 95px; }
+      .guide-card { padding: 20px; }
+      .info-card { padding: 17px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  `],
 })
 export class StudentRegisterComponent implements OnInit {
   private readonly supabase = inject(SupabaseService);
+  private readonly toast = inject(Toast);
 
   readonly courses = signal<CatalogItem[]>([]);
   readonly batches = signal<CatalogItem[]>([]);
   readonly catalogLoading = signal(true);
-
   readonly saving = signal(false);
   readonly registered = signal(false);
-  readonly notice = signal('');
-  readonly noticeType = signal<NoticeType>('warning');
 
   fullName = '';
   email = '';
   studentPhone = '';
   studentCnic = '';
   address = '';
-
   lastEducation = '';
   laptopAvailable: '' | 'yes' | 'no' = '';
-
   fatherName = '';
   fatherPhone = '';
   fatherCnic = '';
   fatherOccupation = '';
-
   selectedCourse = '';
   selectedBatch = '';
 
   get availableBatches(): CatalogItem[] {
-    if (!this.selectedCourse) {
-      return [];
-    }
-
-    return this.batches().filter(
-      batch => batch.courseId === this.selectedCourse,
-    );
+    if (!this.selectedCourse) return [];
+    return this.batches().filter(batch => batch.courseId === this.selectedCourse);
   }
 
   async ngOnInit(): Promise<void> {
     await this.loadCatalogs();
   }
 
+  /** Sirf digits allow karta hai aur max length se zyada nahi jane deta. */
+  setDigits(
+    field: 'studentPhone' | 'fatherPhone' | 'studentCnic' | 'fatherCnic',
+    raw: string,
+    max: number,
+  ): void {
+    const cleaned = (raw ?? '').replace(/\D/g, '').slice(0, max);
+    this[field] = raw;
+    if (cleaned !== raw) {
+      queueMicrotask(() => { this[field] = cleaned; });
+    }
+  }
+
+  private friendlyError(message: string): { title: string; text: string } {
+    const m = message.toLowerCase();
+    if (m.includes('email')) {
+      return { title: 'Already Registered', text: 'This email address is already registered. Please use a different email or log in to your student account.' };
+    }
+    if (m.includes('cnic')) {
+      return { title: 'Already Registered', text: 'This CNIC / B-Form number is already registered.' };
+    }
+    if (m.includes('phone')) {
+      return { title: 'Already Registered', text: 'This phone number is already registered.' };
+    }
+    if (m.includes('duplicate key') || m.includes('unique constraint') || m.includes('already')) {
+      return { title: 'Already Registered', text: 'A student with these details is already registered.' };
+    }
+    return { title: 'Registration Failed', text: message || 'Registration failed. Please try again.' };
+  }
+
   private async loadCatalogs(): Promise<void> {
     this.catalogLoading.set(true);
-    this.notice.set('');
-
     try {
       const [courseResult, batchResult] = await Promise.all([
         this.supabase.client.from('courses').select('*'),
         this.supabase.client.from('course_batches').select('*'),
       ]);
 
-      if (courseResult.error) {
-        throw courseResult.error;
-      }
-
-      if (batchResult.error) {
-        throw batchResult.error;
-      }
+      if (courseResult.error) throw courseResult.error;
+      if (batchResult.error) throw batchResult.error;
 
       const courseRows = (courseResult.data ?? []) as DbRow[];
       const batchRows = (batchResult.data ?? []) as DbRow[];
@@ -458,55 +465,30 @@ export class StudentRegisterComponent implements OnInit {
       const courses: CatalogItem[] = courseRows
         .map(row => ({
           id: this.readValue(row, ['course_id', 'id']),
-          name: this.readValue(row, [
-            'course_name',
-            'course_title',
-            'title',
-            'name',
-          ]),
+          name: this.readValue(row, ['course_name', 'course_title', 'title', 'name']),
         }))
         .filter(item => item.id !== '' && item.name !== '');
 
       const batches: CatalogItem[] = batchRows
         .map(row => ({
-          id: this.readValue(row, [
-            'course_batch_id',
-            'batch_id',
-            'id',
-          ]),
-          name: this.readValue(row, [
-            'batch_name',
-            'course_batch_name',
-            'batch_title',
-            'title',
-            'name',
-          ]),
-          courseId: this.readValue(row, [
-            'course_id',
-            'courseId',
-          ]),
+          id: this.readValue(row, ['course_batch_id', 'batch_id', 'id']),
+          name: this.readValue(row, ['batch_name', 'course_batch_name', 'batch_title', 'title', 'name']),
+          courseId: this.readValue(row, ['course_id', 'courseId']),
         }))
-        .filter(item =>
-          item.id !== '' &&
-          item.name !== '' &&
-          item.courseId !== '',
-        );
+        .filter(item => item.id !== '' && item.name !== '' && item.courseId !== '');
 
       this.courses.set(courses);
       this.batches.set(batches);
 
       if (courses.length === 0) {
-        this.showNotice(
-          'No courses were found.',
-          'warning',
-        );
+        this.toast.warning('No courses were found.', 'Courses Unavailable');
       }
     } catch (error: unknown) {
-      this.showNotice(
+      this.toast.error(
         error instanceof Error
-          ? `Unable to load data: ${error.message}`
-          : 'Unable to load courses.',
-        'error',
+          ? `Unable to load courses: ${error.message}`
+          : 'Unable to load courses and batches.',
+        'Catalog Error',
       );
     } finally {
       this.catalogLoading.set(false);
@@ -515,14 +497,10 @@ export class StudentRegisterComponent implements OnInit {
 
   onCourseChange(): void {
     this.selectedBatch = '';
-    this.notice.set('');
-    this.noticeType.set('warning');
   }
 
   async registerStudent(): Promise<void> {
-    if (this.saving() || this.registered()) {
-      return;
-    }
+    if (this.saving() || this.registered()) return;
 
     const fullName = this.fullName.trim();
     const email = this.email.trim().toLowerCase();
@@ -530,98 +508,82 @@ export class StudentRegisterComponent implements OnInit {
     const studentCnic = this.normalizeCnic(this.studentCnic);
     const address = this.address.trim();
     const lastEducation = this.lastEducation.trim();
-
     const fatherName = this.fatherName.trim();
     const fatherPhone = this.fatherPhone.trim();
-    const fatherCnic = this.fatherCnic
+    const fatherCnic = this.fatherCnic.trim()
       ? this.normalizeCnic(this.fatherCnic)
       : null;
     const fatherOccupation = this.fatherOccupation.trim() || null;
 
     if (
-      !fullName ||
-      !email ||
-      !studentPhone ||
-      !studentCnic ||
-      !address ||
-      !lastEducation ||
-      !this.laptopAvailable ||
-      !fatherName ||
-      !fatherPhone ||
-      !this.selectedCourse ||
+      !fullName || !email || !studentPhone || !studentCnic ||
+      !address || !lastEducation || !this.laptopAvailable ||
+      !fatherName || !fatherPhone || !this.selectedCourse ||
       !this.selectedBatch
     ) {
-      this.showNotice(
-        'Please complete all required fields.',
-        'warning',
-      );
+      this.toast.warning('Please complete all required fields.', 'Missing Information');
+      return;
+    }
+
+    const phoneDigits = (v: string) => v.replace(/\D/g, '');
+    if (phoneDigits(studentPhone).length !== 11 || phoneDigits(fatherPhone).length !== 11) {
+      this.toast.warning('Phone number must be exactly 11 digits.', 'Invalid Phone Number');
+      return;
+    }
+
+    if (studentCnic.length !== 13) {
+      this.toast.warning('Please enter a valid 13-digit CNIC or B-Form.', 'Invalid CNIC');
+      return;
+    }
+
+    if (fatherCnic && fatherCnic.length !== 13) {
+      this.toast.warning('Please enter a valid guardian CNIC or leave it empty.', 'Invalid Guardian CNIC');
       return;
     }
 
     this.saving.set(true);
-    this.notice.set('');
-
     try {
-      const { data, error } =
-        await this.supabase.client.functions.invoke('register-student', {
-          body: {
-            fullName,
-            email,
-            studentPhone,
-            studentCnic,
-            address,
-            lastEducation,
-            laptopAvailable: this.laptopAvailable === 'yes',
-
-            fatherName,
-            fatherPhone,
-            fatherCnic,
-            fatherOccupation,
-
-            courseId: this.selectedCourse,
-            batchId: this.selectedBatch,
-          },
-        });
+      const { data, error } = await this.supabase.client.functions.invoke('register-student', {
+        body: {
+          fullName,
+          email,
+          studentPhone,
+          studentCnic,
+          address,
+          lastEducation,
+          laptopAvailable: this.laptopAvailable === 'yes',
+          fatherName,
+          fatherPhone,
+          fatherCnic,
+          fatherOccupation,
+          courseId: this.selectedCourse,
+          batchId: this.selectedBatch,
+        },
+      });
 
       if (error) {
         if (error instanceof FunctionsHttpError) {
-          // Function ran, but it returned an error response
           const details = await error.context.json().catch(() => null);
           throw new Error(
-            details?.error ??
-              details?.message ??
-              'Function returned an error.',
+            details?.error ?? details?.message ?? 'Registration function returned an error.',
           );
         }
-
         if (error instanceof FunctionsFetchError) {
-          // Request never reached the function
           console.error('Edge Function fetch error:', error);
           throw new Error(
-            'Server se connect nahi ho paya. Edge Function deploy, CORS aur environment.ts check karein.',
+            'Server se connect nahi ho paya. Edge Function deployment, CORS aur environment settings check karein.',
           );
         }
-
         throw new Error(error.message);
       }
 
-      if (data?.error) {
-        throw new Error(data.error);
-      }
+      if (data?.error) throw new Error(data.error);
 
       this.registered.set(true);
-      this.showNotice(
-        data?.message ??
-          'Registration request completed.',
-        'success',
-      );
+      this.toast.success(data?.message ?? 'Registration completed successfully.', 'Application Submitted');
     } catch (error: unknown) {
-      this.showNotice(
-        error instanceof Error
-          ? error.message
-          : 'Registration failed.',
-        'error',
-      );
+      const friendly = this.friendlyError(error instanceof Error ? error.message : '');
+      this.toast.error(friendly.text, friendly.title);
     } finally {
       this.saving.set(false);
     }
@@ -634,21 +596,10 @@ export class StudentRegisterComponent implements OnInit {
   private readValue(row: DbRow, keys: string[]): string {
     for (const key of keys) {
       const value = row[key];
-
-      if (
-        value !== null &&
-        value !== undefined &&
-        String(value).trim() !== ''
-      ) {
+      if (value !== null && value !== undefined && String(value).trim() !== '') {
         return String(value).trim();
       }
     }
-
     return '';
-  }
-
-  private showNotice(message: string, type: NoticeType): void {
-    this.notice.set(message);
-    this.noticeType.set(type);
   }
 }

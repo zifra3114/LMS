@@ -11,7 +11,7 @@ function parseId(req, res, next) {
   const id = Number(req.params.id);
 
   if (!Number.isSafeInteger(id) || id <= 0) {
-    return res.status(400).json({ error: 'Lecture id theek nahi.' });
+    return res.status(400).json({ error: 'Invalid lecture ID.' });
   }
 
   req.lectureId = id;
@@ -62,27 +62,27 @@ export function createApp({ config, db, storage, processor }) {
     const chunk = req.body;
 
     if (!Number.isSafeInteger(offset) || offset < 0 || !Number.isSafeInteger(total) || total <= 0) {
-      return res.status(400).json({ error: 'offset aur total theek nahi.' });
+      return res.status(400).json({ error: 'Invalid upload offset or total size.' });
     }
 
     if (!ALLOWED_EXTENSIONS.has(path.extname(filename).toLowerCase())) {
-      return res.status(400).json({ error: 'Sirf mp4, m4v, mov, mkv, webm ya avi file chalegi.' });
+      return res.status(400).json({ error: 'Unsupported file type. Please upload an MP4, M4V, MOV, MKV, WEBM or AVI video.' });
     }
 
     if (total > config.maxUploadBytes) {
       const gb = Math.round(config.maxUploadBytes / 1024 ** 3);
-      return res.status(413).json({ error: `Video ${gb} GB se badi nahi ho sakti.` });
+      return res.status(413).json({ error: `The video cannot be larger than ${gb} GB.` });
     }
 
     if (!Buffer.isBuffer(chunk) || chunk.length === 0) {
-      return res.status(400).json({ error: 'Khali tukra.' });
+      return res.status(400).json({ error: 'Empty upload chunk.' });
     }
 
     const lecture = await db.getLecture(id);
-    if (!lecture) return res.status(404).json({ error: 'Lecture nahi mila.' });
+    if (!lecture) return res.status(404).json({ error: 'Lecture not found.' });
 
     if (lecture.processing_status === 'Processing') {
-      return res.status(409).json({ error: 'Video abhi process ho rahi hai. Khatam hone dein.' });
+      return res.status(409).json({ error: 'This video is still being processed. Please wait until it finishes.' });
     }
 
     const part = storage.partPath(id);
@@ -108,16 +108,16 @@ export function createApp({ config, db, storage, processor }) {
     const meta = await readJson(storage.metaPath(id));
 
     if (!meta || meta.total !== total || meta.filename !== filename) {
-      return res.status(409).json({ error: 'Ye wohi file nahi jo pehle upload ho rahi thi.' });
+      return res.status(409).json({ error: 'This is not the same file that was being uploaded.' });
     }
 
     if (offset !== current) {
       // Client ko bata do server ke paas kitna hai, wo wahin se bhejega
-      return res.status(409).json({ error: 'Offset mel nahi khata.', received: current });
+      return res.status(409).json({ error: 'Upload offset mismatch.', received: current });
     }
 
     if (current + chunk.length > total) {
-      return res.status(400).json({ error: 'Tukra file ki size se bada hai.' });
+      return res.status(400).json({ error: 'The chunk exceeds the declared file size.' });
     }
 
     await fsp.appendFile(part, chunk);
@@ -131,7 +131,7 @@ export function createApp({ config, db, storage, processor }) {
     const received = await fileSize(storage.partPath(id));
 
     if (!meta || received !== meta.total) {
-      return res.status(409).json({ error: 'Upload abhi mukammal nahi.', received });
+      return res.status(409).json({ error: 'The upload is not complete yet.', received });
     }
 
     await fsp.rename(storage.partPath(id), storage.sourcePath(id));
@@ -172,21 +172,21 @@ export function createApp({ config, db, storage, processor }) {
     const id = req.lectureId;
     const lecture = await db.getLecture(id);
 
-    if (!lecture) return res.status(404).json({ error: 'Lecture nahi mila.' });
+    if (!lecture) return res.status(404).json({ error: 'Lecture not found.' });
 
     if (!req.user.isAdmin) {
       // Student ko Drafted lecture ka pata hi na chale
       if (lecture.status !== 'Published') {
-        return res.status(404).json({ error: 'Lecture nahi mila.' });
+        return res.status(404).json({ error: 'Lecture not found.' });
       }
 
       if (!(await db.isBatchMember(req.user.id, lecture.batch_id))) {
-        return res.status(403).json({ error: 'Ye lecture aapke batch ki nahi hai.' });
+        return res.status(403).json({ error: 'This lecture does not belong to your batch.' });
       }
     }
 
     if (lecture.processing_status !== 'Ready') {
-      return res.status(409).json({ error: 'Video abhi tayyar nahi hai.' });
+      return res.status(409).json({ error: 'This video is not ready yet.' });
     }
 
     const ttlSeconds = Math.round(config.playbackTtlHours * 3600);
@@ -211,7 +211,7 @@ export function createApp({ config, db, storage, processor }) {
     const token = typeof req.query.t === 'string' ? req.query.t : '';
 
     if (!verifyPlaybackToken(token, id, config.playbackSecret)) {
-      return res.status(401).json({ error: 'Video ka token theek nahi ya expire ho gaya.' });
+      return res.status(401).json({ error: 'The playback link is invalid or has expired.' });
     }
 
     const dir = storage.hlsDir(id);
@@ -253,7 +253,7 @@ export function createApp({ config, db, storage, processor }) {
     if (status === 500) console.error(error);
 
     res.status(status).json({
-      error: status === 500 ? 'Server mein masla aaya. Dobara koshish karein.' : error.message,
+      error: status === 500 ? 'Something went wrong on the server. Please try again.' : error.message,
     });
   });
 

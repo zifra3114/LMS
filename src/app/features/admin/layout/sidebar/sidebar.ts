@@ -1,6 +1,9 @@
 import { Component, input, output } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { IconComponent, IconName } from '../../../../shared/components/icon/icon';
+import {
+  IconComponent,
+  IconName,
+} from '../../../../shared/components/icon/icon';
 
 export interface NavItem {
   label: string;
@@ -14,40 +17,153 @@ export interface NavItem {
   imports: [RouterLink, RouterLinkActive, IconComponent],
   template: `
     @if (open()) {
-      <div class="fixed inset-0 z-30 bg-black/40 lg:hidden" (click)="closed.emit()"></div>
+      <div
+        class="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
+        (click)="closed.emit()"
+      ></div>
     }
 
     <aside
-      class="fixed inset-y-0 left-0 z-40 w-64 border-r border-slate-200 bg-slate-50 transition-transform duration-200"
+      class="admin-sidebar fixed inset-y-0 left-0 z-40 flex w-64 flex-col
+             border-r border-white/10 bg-[#020617] text-white
+             transition-transform duration-200 lg:translate-x-0"
       [class.-translate-x-full]="!open()"
     >
-      <div class="flex h-16 items-center gap-3 px-6">
-        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white">
-          <app-icon name="graduation-cap" [size]="20" />
+      <!-- Brand -->
+      <div
+        class="flex h-16 shrink-0 items-center gap-3 border-b
+               border-white/10 px-5"
+      >
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-xl
+                 bg-[#1d4ed8] text-white shadow-lg shadow-blue-900/30"
+        >
+          <app-icon name="graduation-cap" [size]="22" />
         </div>
-        <span class="text-lg font-bold text-slate-900">EduCore <span class="font-normal text-slate-400">LMS</span></span>
+
+        <div class="flex flex-col">
+          <span class="text-lg font-extrabold tracking-tight text-white">
+            EduCore
+            <span class="font-medium text-blue-400">LMS</span>
+          </span>
+          <span
+            class="text-[9px] font-bold uppercase tracking-[0.2em]
+                   text-slate-400"
+          >
+            Admin Portal
+          </span>
+        </div>
       </div>
 
-      <nav class="space-y-1 px-3 py-4">
+      <!-- Navigation Label -->
+      <div class="px-6 pb-2 pt-6">
+        <p
+          class="text-[10px] font-bold uppercase tracking-[0.18em]
+                 text-slate-500"
+        >
+          Main Menu
+        </p>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
         @for (item of items; track item.path) {
           <a
             [routerLink]="item.path"
             routerLinkActive="active"
             (click)="onNavigate()"
-            class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            class="nav-link flex items-center gap-3 rounded-xl px-3.5 py-3
+                   text-sm font-medium text-slate-400
+                   transition-all duration-200
+                   hover:bg-white/[0.06] hover:text-white"
           >
-            <app-icon [name]="item.icon" [size]="18" />
-            {{ item.label }}
+            <span class="nav-icon flex shrink-0 items-center justify-center">
+              <app-icon [name]="item.icon" [size]="19" />
+            </span>
+
+            <span>{{ item.label }}</span>
           </a>
         }
       </nav>
+
+      <!-- Bottom Branding -->
+      <div class="shrink-0 border-t border-white/10 p-4">
+        <div
+          class="rounded-xl border border-white/[0.08]
+                 bg-white/[0.04] p-3"
+        >
+          <div class="flex items-center gap-2">
+            <span class="h-2 w-2 rounded-full bg-blue-400"></span>
+            <span class="text-xs font-semibold text-slate-300">
+              EduCore Administration
+            </span>
+          </div>
+
+          <p class="mt-2 text-[10px] leading-relaxed text-slate-500">
+            Manage courses, students and learning activities.
+          </p>
+        </div>
+      </div>
     </aside>
   `,
   styles: `
+    :host {
+      display: block;
+    }
+
+    .admin-sidebar {
+      box-shadow: 8px 0 30px rgb(2 6 23 / 10%);
+    }
+
+    .nav-link {
+      position: relative;
+      text-decoration: none;
+      outline: none;
+    }
+
+    .nav-icon {
+      width: 22px;
+      height: 22px;
+      transition: transform 180ms ease;
+    }
+
+    .nav-link:hover .nav-icon {
+      transform: translateX(2px);
+    }
+
     .nav-link.active {
-      background-color: #e2e8f0;
-      color: #0f172a;
-      font-weight: 600;
+      background: #1d4ed8;
+      color: #ffffff;
+      font-weight: 700;
+      box-shadow: 0 6px 18px rgb(29 78 216 / 25%);
+    }
+
+    .nav-link.active::before {
+      content: '';
+      position: absolute;
+      left: -1px;
+      top: 25%;
+      height: 50%;
+      width: 3px;
+      border-radius: 0 4px 4px 0;
+      background: #93c5fd;
+    }
+
+    .nav-link.active .nav-icon {
+      color: #ffffff;
+    }
+
+    .nav-link:focus-visible {
+      outline: 2px solid #60a5fa;
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .admin-sidebar,
+      .nav-link,
+      .nav-icon {
+        transition: none;
+      }
     }
   `,
 })
@@ -69,8 +185,9 @@ export class SidebarComponent {
     { label: 'Settings', path: '/admin/settings', icon: 'settings' },
   ];
 
-  /** On small screens the sidebar closes after navigating. */
   onNavigate(): void {
-    if (window.innerWidth < 1024) this.closed.emit();
+    if (window.innerWidth < 1024) {
+      this.closed.emit();
+    }
   }
 }

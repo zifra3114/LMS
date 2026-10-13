@@ -18,6 +18,18 @@ export function createDb({ supabaseUrl, supabaseServiceKey }) {
       return { id: data.user.id, email: data.user.email ?? null };
     },
 
+    /** Admin wohi hai jiske `profiles.role` mein 'admin' likha ho (Angular ke AuthService.isAdmin jaisa). */
+    async isAdminUser(userId) {
+      const { data, error } = await client
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data?.role === 'admin';
+    },
+
     async getLecture(id) {
       const { data, error } = await client
         .from('lectures')
@@ -34,16 +46,12 @@ export function createDb({ supabaseUrl, supabaseServiceKey }) {
       if (error) throw error;
     },
 
-    /**
-     * ASSUMPTION: students ko batch se jodne wali table `batch_students` hai
-     * (columns: batch_id, student_id = auth user id). Aapki table alag ho to sirf yahan badlein.
-     * Same cheez Angular ke liveclass.service.ts ke getMyBatchIds() mein bhi hai.
-     */
+    /** Student us batch ka hai ya nahi: students.user_id = login ki id, students.batch_id = uska batch. */
     async isBatchMember(userId, batchId) {
       const { data, error } = await client
-        .from('batch_students')
-        .select('batch_id')
-        .eq('student_id', userId)
+        .from('students')
+        .select('id')
+        .eq('user_id', userId)
         .eq('batch_id', batchId)
         .limit(1);
 
