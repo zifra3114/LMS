@@ -1,1 +1,20 @@
 @import "tailwindcss";
+
+/* Dark mode support */
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Body defaults */
+body {
+  @apply bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100;
+}

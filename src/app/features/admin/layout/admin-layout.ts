@@ -8,7 +8,7 @@ import { TopbarComponent } from './topbar/topbar';
   standalone: true,
   imports: [RouterOutlet, SidebarComponent, TopbarComponent],
   template: `
-    <div class="min-h-screen bg-white">
+    <div class="min-h-screen bg-white dark:bg-slate-900">
       <app-admin-sidebar [open]="sidebarOpen()" (closed)="sidebarOpen.set(false)" />
 
       <div class="transition-[padding] duration-200" [class]="sidebarOpen() ? 'lg:pl-64' : ''">

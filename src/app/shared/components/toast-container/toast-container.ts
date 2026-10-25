@@ -11,18 +11,18 @@ import { Toast, ToastType } from '../../../core/services/toast.service';
       @for (item of toast.toasts$ | async; track item.id) {
         <div
           role="status"
-          class="pointer-events-auto flex items-start gap-3 rounded-xl border bg-white p-4 shadow-lg transition-all duration-300"
+          class="pointer-events-auto flex items-start gap-3 rounded-xl border bg-white p-4 shadow-lg transition-all duration-300 dark:bg-slate-800 dark:shadow-slate-900/50"
           [class]="styles[item.type] + (item.leaving ? ' translate-x-6 opacity-0' : ' translate-x-0 opacity-100')"
         >
           <div class="min-w-0 flex-1">
-            <p class="text-sm font-semibold text-slate-900">{{ item.title || defaults[item.type] }}</p>
-            <p class="mt-0.5 break-words text-sm text-slate-600">{{ item.message }}</p>
+            <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ item.title || defaults[item.type] }}</p>
+            <p class="mt-0.5 break-words text-sm text-slate-600 dark:text-slate-300">{{ item.message }}</p>
           </div>
           <button
             type="button"
             (click)="toast.dismiss(item.id)"
             aria-label="Close"
-            class="shrink-0 text-slate-400 transition hover:text-slate-700"
+            class="shrink-0 text-slate-400 transition hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
           >✕</button>
         </div>
       }

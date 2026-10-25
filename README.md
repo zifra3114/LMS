@@ -1,59 +1,175 @@
-# LmsFrontend
+# LMS Frontend - EduCore Learning Management System
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.2.
+Modern Learning Management System built with Angular 22, Tailwind CSS 4, and Supabase.
 
-## Development server
+## Features
 
-To start a local development server, run:
+✨ **Dark/Light Theme** - Seamless theme switching with system preference detection
+🔔 **Toast Notifications** - Beautiful toast notifications across the app
+📱 **Responsive Design** - Works perfectly on all devices
+🎨 **Modern UI** - Clean and professional interface with Tailwind CSS
+🔐 **Authentication** - Secure admin and student login
+📊 **Real-time Dashboard** - Live updates with Supabase Realtime
+🎓 **Course Management** - Manage courses, assignments, quizzes, and more
 
+## Tech Stack
+
+- **Framework:** Angular 22
+- **Styling:** Tailwind CSS 4
+- **Backend:** Supabase
+- **Deployment:** Vercel
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+ 
+- npm 11+
+
+### Installation
+
+1. Clone the repository
 ```bash
-ng serve
+git clone <repository-url>
+cd LMS
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
+2. Install dependencies
 ```bash
-ng generate component component-name
+npm install
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+3. Configure environment variables
 
-```bash
-ng generate --help
+Create a `src/environments/environment.ts` file with your Supabase credentials:
+
+```typescript
+export const environment = {
+  production: false,
+  supabase: {
+    url: 'YOUR_SUPABASE_URL',
+    key: 'YOUR_SUPABASE_ANON_KEY'
+  }
+};
 ```
 
-## Building
+Create a `src/environments/environment.development.ts` file:
 
-To build the project run:
-
-```bash
-ng build
+```typescript
+export const environment = {
+  production: false,
+  supabase: {
+    url: 'YOUR_SUPABASE_URL',
+    key: 'YOUR_SUPABASE_ANON_KEY'
+  }
+};
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
+4. Start development server
 ```bash
-ng test
+npm start
 ```
 
-## Running end-to-end tests
+The app will open at `http://localhost:4200`
 
-For end-to-end (e2e) testing, run:
+## Building for Production
 
 ```bash
-ng e2e
+npm run build
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Build output will be in `dist/lms-frontend/browser/`
 
-## Additional Resources
+## Deployment to Vercel
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+### Option 1: Deploy via Vercel CLI
+
+1. Install Vercel CLI
+```bash
+npm i -g vercel
+```
+
+2. Deploy
+```bash
+vercel
+```
+
+### Option 2: Deploy via Vercel Dashboard
+
+1. Push your code to GitHub
+2. Import the project in Vercel dashboard
+3. Vercel will auto-detect Angular and use the settings from `vercel.json`
+4. Add environment variables in Vercel dashboard (if needed)
+5. Deploy!
+
+### Environment Variables for Vercel
+
+If you need to use environment variables in production, add them in Vercel dashboard:
+
+- `SUPABASE_URL`: Your Supabase project URL
+- `SUPABASE_ANON_KEY`: Your Supabase anon/public key
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── core/
+│   │   ├── guards/         # Route guards
+│   │   ├── services/       # Core services (auth, toast, theme, etc.)
+│   │   └── config/         # Configuration files
+│   ├── features/
+│   │   ├── admin/          # Admin features
+│   │   └── students/       # Student features
+│   ├── shared/
+│   │   └── components/     # Reusable components
+│   └── app.ts              # Root component
+├── environments/           # Environment configurations
+└── styles.css             # Global styles
+```
+
+## Key Features Implementation
+
+### Dark Mode
+- System preference detection
+- Persistent theme storage in localStorage
+- Smooth transitions between themes
+- Toggle available in admin topbar
+
+### Toast Notifications
+Toast service is available throughout the app:
+
+```typescript
+import { Toast } from './core/services/toast.service';
+
+constructor(private toast: Toast) {}
+
+// Usage
+this.toast.success('Operation successful!');
+this.toast.error('Something went wrong');
+this.toast.warning('Please be careful');
+this.toast.info('Here is some information');
+```
+
+## Scripts
+
+- `npm start` - Start development server
+- `npm run build` - Build for production
+- `npm run build:dev` - Build for development
+- `npm run watch` - Build and watch for changes
+- `npm test` - Run tests
+
+## Browser Support
+
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+
+## License
+
+Private - All rights reserved
+
+## Support
+
+For issues and questions, please contact the development team.

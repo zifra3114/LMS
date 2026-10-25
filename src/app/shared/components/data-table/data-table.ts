@@ -13,20 +13,20 @@ export interface TableColumn {
   standalone: true,
   imports: [BadgeComponent],
   template: `
-    <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
       <table class="min-w-full text-left text-sm">
-        <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500 dark:bg-slate-900 dark:text-slate-400">
           <tr>
             @for (col of columns(); track col.key) {
               <th class="px-5 py-3 font-semibold">{{ col.label }}</th>
             }
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100">
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
           @for (row of rows(); track $index) {
-            <tr class="hover:bg-slate-50">
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
               @for (col of columns(); track col.key) {
-                <td class="px-5 py-3 text-slate-700">
+                <td class="px-5 py-3 text-slate-700 dark:text-slate-300">
                   @if (col.badge) {
                     <app-badge [variant]="col.badge[row[col.key]] ?? 'neutral'">
                       {{ row[col.key] }}
@@ -39,7 +39,7 @@ export interface TableColumn {
             </tr>
           } @empty {
             <tr>
-              <td [attr.colspan]="columns().length" class="px-5 py-10 text-center text-slate-400">
+              <td [attr.colspan]="columns().length" class="px-5 py-10 text-center text-slate-400 dark:text-slate-500">
                 {{ emptyMessage() }}
               </td>
             </tr>

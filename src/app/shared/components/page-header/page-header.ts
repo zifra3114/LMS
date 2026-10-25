@@ -6,9 +6,9 @@ import { Component, input } from '@angular/core';
   template: `
     <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900">{{ title() }}</h1>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ title() }}</h1>
         @if (subtitle()) {
-          <p class="text-sm text-slate-500">{{ subtitle() }}</p>
+          <p class="text-sm text-slate-500 dark:text-slate-400">{{ subtitle() }}</p>
         }
       </div>
       <div><ng-content /></div>
